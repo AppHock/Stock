@@ -2846,11 +2846,11 @@ def getDoubleStoke_strong():
         if len(dataArr) < dayNum:
             continue
         
+        if '000570' in code:
+            print('www')
+
         if dataArr[0+pre_move]['pct_chg'] < 9.7:
             continue
-
-        if '601018' in code:
-            print('www')
 
         # 最近100天的最高价
         maxPrice_100 = getMaxClosePrice(dataArr[pre_move:100+pre_move])
@@ -2873,7 +2873,7 @@ def getDoubleStoke_strong():
 
 
         chage = cal250PriceChage(dataArr[0+pre_move:250+pre_move], dataArr[0+pre_move])
-        if (chage < 0.18) & (chage > -0.05):
+        if (chage < 0.35) & (chage > -0.05):
             limitUpCodes.append(industryAndCode[code]['name'])
     print('==============找出从250均线附近涨停，未来可以翻倍：%d ===============' % len(limitUpCodes))
     for name in limitUpCodes:
@@ -3001,6 +3001,7 @@ if __name__ == "__main__":
     # ztfb()
     # getBigStoke()
     # getZCXStoke()
+
     getDoubleStoke()
     getDoubleStoke_strong()
     '''

@@ -465,15 +465,15 @@ def getHistoryDataByDate():
     
 
 if __name__ == "__main__":
-    getHistoryDataByDate()
+    # getHistoryDataByDate()
     # getQFQVerPrice()
     # 更新股票行情信息
     # getAllStokeInfo()
 
     # 每天都可以跑一次，把最新的日K数据拉取到本地
-    # addNewData()
+    addNewData()
     # 每次开始做回归测试时，需要先本地数据全部读取到内存中，以便其他进场获取数据
-    # getLocalData()
+    getLocalData()
 
     # 从网络获取最近600天的数据保存在本地
     # getAllStokeData(500)
