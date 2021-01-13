@@ -27,6 +27,7 @@ import json
 token = 'ed854a25065df86d7d0dddf9161abc26e7eff21ccd2ba4d0d3d3e28c'
 tu.set_token(token)
 pro = tu.pro_api()
+path = '/Users/chengpeng2/Desktop/choice/'
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
 # 获取某只股的最新收盘价
@@ -614,7 +615,8 @@ def ZZDD(dayNum):
         
 # 逻辑：获得本地最近dayNum天的交易日K线数据
 def getLocalKLineData(dayNum):
-    with open('/Users/chengpeng2/Desktop/choice/test.dat', 'r') as f:
+    fileUrl = path + 'test.dat'
+    with open(fileUrl, 'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as m:
             s = m.read(m.size())
             # 单引号转双引号
@@ -2920,6 +2922,42 @@ def getDoubleStoke():
     for name in limitUpCodes:
         print(name)
         
+# 逻辑：连续上涨2天的股
+def continuousZT2Day():
+    pre_move = 0
+    dayNum = 250+pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode = Stoke.getCodeInfo()
+    allCodes = list(allStokeDate.keys())
+    limitUpCodes = []
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if '688' in code:
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < dayNum:
+            continue
+        
+        # 最近两天连续涨停
+        if (dataArr[0+pre_move]['pct_chg'] < 9.7) | (dataArr[1+pre_move]['pct_chg'] < 9.7):
+            continue
+
+        if (dataArr[2+pre_move]['pct_chg'] > 9.7) | (dataArr[3+pre_move]['pct_chg'] > 9.7):
+            continue
+
+        # 最近90天的最高价
+        maxPrice_90 = getMaxClosePrice(dataArr[pre_move+1:90+pre_move])
+        if (maxPrice_90 > dataArr[0+pre_move]['close']):
+            continue
+        
+        chage = cal250PriceChage(dataArr[0+pre_move:250+pre_move], dataArr[0+pre_move])
+        if (chage < 0.25) & (chage > -0.05):
+            limitUpCodes.append(industryAndCode[code]['name'])
+    print('==============连续上涨2天的股：%d ===============' % len(limitUpCodes))
+    for name in limitUpCodes:
+        print(name)
+
 if __name__ == "__main__":
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
     # codes = '000517.SZ,000570.SZ,000659.SZ,000711.SZ,000796.SZ,000898.SZ,000955.SZ,000990.SZ,002098.SZ,002100.SZ,002103.SZ,002217.SZ,002274.SZ,002277.SZ,002342.SZ,002343.SZ,002374.SZ,002423.SZ,002470.SZ,002476.SZ,002492.SZ,002559.SZ,002591.SZ,002671.SZ,002694.SZ,002889.SZ,002903.SZ,002988.SZ,300025.SZ,300043.SZ,300048.SZ,300055.SZ,300062.SZ,300070.SZ,300173.SZ,300240.SZ,300272.SZ,300296.SZ,300303.SZ,300325.SZ,300350.SZ,300389.SZ,300647.SZ,300713.SZ,300819.SZ,300824.SZ,600027.SH,600110.SH,600116.SH,600125.SH,600159.SH,600269.SH,600287.SH,600382.SH,600540.SH,600576.SH,600642.SH,600692.SH,600707.SH,600715.SH,600757.SH,600780.SH,600792.SH,600794.SH,600796.SH,600869.SH,601008.SH,601368.SH,601588.SH,601700.SH,601869.SH,601992.SH,603012.SH,603315.SH,603356.SH,603567.SH,603585.SH,603598.SH,603918.SH'
@@ -3004,6 +3042,7 @@ if __name__ == "__main__":
 
     getDoubleStoke()
     getDoubleStoke_strong()
+    continuousZT2Day()
     '''
     # 测试：用于寻找股票
     allStokeDate = getLocalKLineData(30)

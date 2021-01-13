@@ -22,6 +22,7 @@ token = '47aca0f52e01163f8fae34938cad4b776021ff2cc1678e557b744899' # 阿文的to
 
 tu.set_token(token)
 pro = tu.pro_api()
+globalPath = '/Users/chengpeng2/Desktop/choice/'
 
 # 逻辑：获得所有股票代码
 def getAllStokeCode():
@@ -308,7 +309,7 @@ def writeNewDayData(dict):
 
 # 逻辑：获得本地保存的数据的最新日期
 def getReTopDate():
-    with open('/Users/chengpeng2/Desktop/choice/test.dat', 'r') as f:
+    with open(globalPath+'test.dat', 'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as m:
             s = m.read(m.size())
             # 单引号转双引号
@@ -321,7 +322,7 @@ def getReTopDate():
 
 # 逻辑：获得本地最近dayNum天的交易日K线数据
 def getLocalKLineData(dayNum):
-    with open('/Users/chengpeng2/Desktop/choice/test.dat', 'r') as f:
+    with open(globalPath+'test.dat', 'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as m:
             s = m.read(m.size())
             # 单引号转双引号
@@ -434,7 +435,7 @@ def getLowPriceMainMoney_3():
 def getHistoryDataByDate():
     historyData = []
     dayNum = 10
-    with open('/Users/chengpeng2/Desktop/choice/test.dat', 'r') as f:
+    with open(globalPath+'test.dat', 'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as m:
             s = m.read(m.size())
             # 单引号转双引号
