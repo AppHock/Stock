@@ -27,7 +27,7 @@ import json
 token = 'ed854a25065df86d7d0dddf9161abc26e7eff21ccd2ba4d0d3d3e28c'
 tu.set_token(token)
 pro = tu.pro_api()
-path = '/Users/chengpeng2/Desktop/choice/'
+path = '/Users/hock/Stock/'
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
 # 获取某只股的最新收盘价
@@ -2958,6 +2958,74 @@ def continuousZT2Day():
     for name in limitUpCodes:
         print(name)
 
+# 逻辑：5日线策略
+def volKLine(volType=5):
+    pre_move = 0
+    dayNum = volType*2 + pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode = Stoke.getCodeInfo()
+    allCodes = list(allStokeDate.keys())
+    limitUpCodes = []
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if '688' in code:
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < dayNum:
+            continue
+
+        if industryAndCode.get(code) == None:
+            continue
+
+        codeName = industryAndCode[code]['name']
+        if 'ST' in codeName:
+            continue
+        
+        # 最近5天收盘价都未跌破当日均线
+        isDiePo_5 = False
+        for i in range(5):
+            if dataArr[pre_move+i]['close']*1.02 < calDayAverage(dataArr[pre_move+i:pre_move+i+5]):
+                isDiePo_5 = True
+                break
+        if isDiePo_5 == True:
+            # 跌破了5日线
+            continue
+
+        # 最近5天是否选在一天涨幅超过5个点的
+        isExitsZ_5 = False
+        # 最近5天内跌的次数
+        dieDayNum = 0
+        # 最近5天是否存在一天跌幅超过5个点的
+        isExitsD_5 = False
+
+        for data in dataArr[pre_move:pre_move+5]:
+            if data['pct_chg'] <= -5:
+                isExitsD_5 = True
+                break
+            if data['pct_chg'] >= 5:
+                isExitsZ_5 = True
+            
+            if data['pct_chg'] < 0:
+                dieDayNum += 1
+        
+        # 剔除5天内存在下跌5个点的股
+        if isExitsD_5 == True:
+            continue
+
+        # 剔除5天内，不存在涨幅在5个点以上的股
+        if isExitsZ_5 == False:
+            continue
+
+        # 剔除5天内下跌超过3天的
+        if dieDayNum >= 3:
+            continue
+        
+        limitUpCodes.append(codeName)
+    print('==============5日线策略：%d ===============' % len(limitUpCodes))
+    for name in limitUpCodes:
+        print(name)
+
 if __name__ == "__main__":
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
     # codes = '000517.SZ,000570.SZ,000659.SZ,000711.SZ,000796.SZ,000898.SZ,000955.SZ,000990.SZ,002098.SZ,002100.SZ,002103.SZ,002217.SZ,002274.SZ,002277.SZ,002342.SZ,002343.SZ,002374.SZ,002423.SZ,002470.SZ,002476.SZ,002492.SZ,002559.SZ,002591.SZ,002671.SZ,002694.SZ,002889.SZ,002903.SZ,002988.SZ,300025.SZ,300043.SZ,300048.SZ,300055.SZ,300062.SZ,300070.SZ,300173.SZ,300240.SZ,300272.SZ,300296.SZ,300303.SZ,300325.SZ,300350.SZ,300389.SZ,300647.SZ,300713.SZ,300819.SZ,300824.SZ,600027.SH,600110.SH,600116.SH,600125.SH,600159.SH,600269.SH,600287.SH,600382.SH,600540.SH,600576.SH,600642.SH,600692.SH,600707.SH,600715.SH,600757.SH,600780.SH,600792.SH,600794.SH,600796.SH,600869.SH,601008.SH,601368.SH,601588.SH,601700.SH,601869.SH,601992.SH,603012.SH,603315.SH,603356.SH,603567.SH,603585.SH,603598.SH,603918.SH'
@@ -3040,9 +3108,10 @@ if __name__ == "__main__":
     # getBigStoke()
     # getZCXStoke()
 
-    getDoubleStoke()
-    getDoubleStoke_strong()
-    continuousZT2Day()
+    # getDoubleStoke()
+    # getDoubleStoke_strong()
+    # continuousZT2Day()
+    volKLine()
     '''
     # 测试：用于寻找股票
     allStokeDate = getLocalKLineData(30)

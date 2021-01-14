@@ -22,7 +22,7 @@ token = '47aca0f52e01163f8fae34938cad4b776021ff2cc1678e557b744899' # 阿文的to
 
 tu.set_token(token)
 pro = tu.pro_api()
-globalPath = '/Users/chengpeng2/Desktop/choice/'
+globalPath = '/Users/hock/Stoke/'
 
 # 逻辑：获得所有股票代码
 def getAllStokeCode():
@@ -469,12 +469,12 @@ if __name__ == "__main__":
     # getHistoryDataByDate()
     # getQFQVerPrice()
     # 更新股票行情信息
-    # getAllStokeInfo()
+    getAllStokeInfo()
 
     # 每天都可以跑一次，把最新的日K数据拉取到本地
-    addNewData()
+    # addNewData()
     # 每次开始做回归测试时，需要先本地数据全部读取到内存中，以便其他进场获取数据
-    getLocalData()
+    # getLocalData()
 
     # 从网络获取最近600天的数据保存在本地
     # getAllStokeData(500)
