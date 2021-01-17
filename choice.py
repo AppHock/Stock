@@ -8,6 +8,7 @@ import Stoke
 import mmap
 import contextlib
 import json
+import sys, os
 
 '''
 保存最近5年A股所有的日K线数据
