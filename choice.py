@@ -27,7 +27,7 @@ import json
 token = 'ed854a25065df86d7d0dddf9161abc26e7eff21ccd2ba4d0d3d3e28c'
 tu.set_token(token)
 pro = tu.pro_api()
-path = '/Users/hock/Stock/'
+path = os.getcwd() + '/'
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
 # 获取某只股的最新收盘价
