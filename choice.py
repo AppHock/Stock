@@ -47,6 +47,7 @@ def getRecentlimitup(dayNum):
     allStokeDate = getLocalKLineData(30)
     limitUpCodes = []
     allCodes = list(allStokeDate.keys())
+    industryAndCode = Stoke.getCodeInfo()
     for i in range(len(allCodes)):
         code = allCodes[i]
         if isNeedDelCode(code):
@@ -60,8 +61,8 @@ def getRecentlimitup(dayNum):
             if chg < 9.9:
                 break
             if j == len(dataArr) - 1:
-                limitUpCodes.append(code)
-    print('===============以下是：从所有股票中选取 最近n天连续涨停的股票===============')
+                limitUpCodes.append(industryAndCode[code]['name'])
+    print('===============以下是：从所有股票中选取 最近连续%d天涨停的股票===============' % dayNum)
     for code in limitUpCodes:
         print(code)
 '''
@@ -3109,10 +3110,11 @@ if __name__ == "__main__":
     # getBigStoke()
     # getZCXStoke()
 
-    # getDoubleStoke()
-    # getDoubleStoke_strong()
-    # continuousZT2Day()
+    getDoubleStoke()
+    getDoubleStoke_strong()
+    continuousZT2Day()
     volKLine()
+    getRecentlimitup(3)
     '''
     # 测试：用于寻找股票
     allStokeDate = getLocalKLineData(30)
