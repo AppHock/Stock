@@ -56,13 +56,17 @@ def getRecentlimitup(dayNum):
             # print("这是一直新上市的股票%s" % code)
             continue
         dataArr = allStokeDate[code][0:dayNum]
+        
+        if allStokeDate[code][dayNum]['pct_chg'] > 9.7:
+            continue
+
         for j in range(len(dataArr)):
             chg = dataArr[j]['pct_chg']
             if chg < 9.9:
                 break
             if j == len(dataArr) - 1:
                 limitUpCodes.append(industryAndCode[code]['name'])
-    print('===============以下是：从所有股票中选取 最近连续%d天涨停的股票===============' % dayNum)
+    print('===============最近连续%d天涨停的股票===============' % dayNum)
     for code in limitUpCodes:
         print(code)
 '''
@@ -2849,9 +2853,6 @@ def getDoubleStoke_strong():
         dataArr = allStokeDate[code]
         if len(dataArr) < dayNum:
             continue
-        
-        if '000570' in code:
-            print('www')
 
         if dataArr[0+pre_move]['pct_chg'] < 9.7:
             continue
@@ -2877,6 +2878,10 @@ def getDoubleStoke_strong():
 
 
         chage = cal250PriceChage(dataArr[0+pre_move:250+pre_move], dataArr[0+pre_move])
+        
+        codeName = industryAndCode[code]['name']
+        if 'ST' in codeName:
+            continue
         if (chage < 0.35) & (chage > -0.05):
             limitUpCodes.append(industryAndCode[code]['name'])
     print('==============找出从250均线附近涨停，未来可以翻倍：%d ===============' % len(limitUpCodes))
@@ -2902,6 +2907,9 @@ def getDoubleStoke():
         if '688' in code:
             continue
 
+        # if not '300' in code:
+        #     continue
+
         dataArr = allStokeDate[code]
         if len(dataArr) < dayNum:
             continue
@@ -2909,17 +2917,18 @@ def getDoubleStoke():
         if dataArr[0+pre_move]['pct_chg'] < 3:
             continue
 
-        if '600362' in code:
-            print('www')
-
         # 最近90天的最高价
         maxPrice_90 = getMaxClosePrice(dataArr[pre_move+1:90+pre_move])
         if (maxPrice_90 > dataArr[0+pre_move]['close']):
             continue
         
         chage = cal250PriceChage(dataArr[0+pre_move:250+pre_move], dataArr[0+pre_move])
+
+        codeName = industryAndCode[code]['name']
+        if 'ST' in codeName:
+            continue
         if (chage < 0.25) & (chage > -0.05):
-            limitUpCodes.append(industryAndCode[code]['name'])
+            limitUpCodes.append(codeName)
     print('==============找出从250均线附近开始上涨的票，未来2周可以50个点：%d ===============' % len(limitUpCodes))
     for name in limitUpCodes:
         print(name)
@@ -2973,6 +2982,9 @@ def volKLine(volType=5):
         if '688' in code:
             continue
 
+        if '300' in code:
+            continue
+        
         dataArr = allStokeDate[code]
         if len(dataArr) < dayNum:
             continue
@@ -3070,7 +3082,6 @@ if __name__ == "__main__":
     # getRebackCode()
     # topMidZ8()
     # ZwZ()
-    # getRecentlimitup(2)
     # searchBigCow()
     # getZTwoDie()
     # getTodayZTPreNot()
@@ -3081,7 +3092,6 @@ if __name__ == "__main__":
     # getRebackD()
     # getNiceVol()
     # limitupFB(1)
-    # getRecentlimitup(2)
 
     # getCattleBearStoke(True)
     
@@ -3112,9 +3122,11 @@ if __name__ == "__main__":
 
     getDoubleStoke()
     getDoubleStoke_strong()
-    continuousZT2Day()
     volKLine()
+    getRecentlimitup(2)
     getRecentlimitup(3)
+
+    # continuousZT2Day()
     '''
     # 测试：用于寻找股票
     allStokeDate = getLocalKLineData(30)
