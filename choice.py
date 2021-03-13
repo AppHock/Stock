@@ -3123,6 +3123,147 @@ def zthc_5():
     print('==============最近涨停回调到5日均线: %d ===============' % len(limitUpCodes_5))
     for name in limitUpCodes_5:
         print(name)
+# 提供数据
+def makeMoney():
+    pre_move = 3
+    dayNum = 10+pre_move
+
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode = Stoke.getCodeInfo()
+
+    allCodes = list(allStokeDate.keys())
+    handleData = allStokeDate
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code) | ('300' in code):
+            handleData.pop(code)
+            continue
+        
+        # 剔除已经退市的股票
+        if industryAndCode.get(code) == None:
+            handleData.pop(code)
+            continue
+
+        codeName = industryAndCode[code]['name']
+        # 剔除ST类股票
+        dataArr = allStokeDate[code]
+        if (len(dataArr) < dayNum) | ('ST' in codeName):
+            handleData.pop(code)
+            continue
+
+    if pre_move:
+        print('==============策略向前偏移天数: %d ===============' % pre_move)
+
+    huang_first_10(handleData, pre_move)
+    huang_crazy_10_adjus(handleData, pre_move)
+    huang_vol_reduce_fall(handleData, pre_move)
+    huang_2day_fall_8(handleData, pre_move)
+
+# 策略一：首版涨停（当天涨停，最近3天没有涨停）
+def huang_first_10(stokeData, pre_move):
+    allCodes = list(stokeData.keys())
+    industryAndCode = Stoke.getCodeInfo()
+    limitUpCodes = []
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        codeName = industryAndCode[code]['name']
+        dataArr = stokeData[code]
+        # 当天涨停
+        if dataArr[0+pre_move]['pct_chg'] <9.7:
+            continue
+        # 前面3天不能有涨停
+        isContinue = False
+        for data in dataArr[1+pre_move:4+pre_move]:
+            if data['pct_chg'] >= 9.7:
+                isContinue = True
+                break
+        if isContinue:
+            continue
+        
+        limitUpCodes.append(codeName)
+    print('==============首版涨停***当天涨停，最近3天没有涨停: %d ===============' % len(limitUpCodes))
+    for name in limitUpCodes:
+        print(name)
+# 策略二：暴涨调整（当天跌幅超过5个点，前面10天出现过3个涨停）
+def huang_crazy_10_adjus(stokeData, pre_move):
+    allCodes = list(stokeData.keys())
+    industryAndCode = Stoke.getCodeInfo()
+    limitUpCodes = []
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        codeName = industryAndCode[code]['name']
+        dataArr = stokeData[code]
+        # 当天跌幅超过5个点
+        if dataArr[0+pre_move]['pct_chg'] > -5:
+            continue
+        # 前面9天涨停次数
+        isZTTime = 0
+        for data in dataArr[1+pre_move:10+pre_move]:
+            if data['pct_chg'] >= 9.7:
+                isZTTime += 1
+        if isZTTime < 3:
+            continue
+        
+        limitUpCodes.append(codeName)
+    print('==============暴涨调整***当天跌幅超过5个点，前面10天出现过3个涨停: %d ===============' % len(limitUpCodes))
+    for name in limitUpCodes:
+        print(name)
+
+# 策略三：缩量暴跌（跌幅超过5个点，切比昨天更低，成交量比昨天少）
+def huang_vol_reduce_fall(stokeData, pre_move):
+    allCodes = list(stokeData.keys())
+    industryAndCode = Stoke.getCodeInfo()
+    limitUpCodes = []
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        codeName = industryAndCode[code]['name']
+        dataArr = stokeData[code]
+        # 当天跌幅超过5个点
+        if dataArr[0+pre_move]['pct_chg'] > -5:
+            continue
+
+        # 当天跌幅超过昨天
+        if (dataArr[0+pre_move]['pct_chg'] > dataArr[1+pre_move]['pct_chg']):
+            continue
+
+        # 剔除，当天成交量>昨天成交量*1.2
+        if (dataArr[0+pre_move]['vol'] >= (dataArr[1+pre_move]['vol']) * 1.2):
+            continue
+        limitUpCodes.append(codeName)
+    print('==============缩量暴跌***跌幅超过5个点，切比昨天更低，成交量比昨天少: %d ===============' % len(limitUpCodes))
+    for name in limitUpCodes:
+        print(name)
+
+# 策略四：缩量暴跌（最近两天跌幅超过8个点，且当天成交量<昨天成交量*1.2，最近10天必须要有涨停）
+def huang_2day_fall_8(stokeData, pre_move):
+    allCodes = list(stokeData.keys())
+    industryAndCode = Stoke.getCodeInfo()
+    limitUpCodes = []
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        codeName = industryAndCode[code]['name']
+        dataArr = stokeData[code]
+        # 最近两天跌幅超过8个点
+        if (dataArr[0+pre_move]['pct_chg'] + dataArr[1+pre_move]['pct_chg']) > -8:
+            continue
+
+        # 剔除，当天成交量>昨天成交量*1.2
+        if (dataArr[0+pre_move]['vol'] >= (dataArr[1+pre_move]['vol']) * 1.2):
+            continue
+
+         # 前面9天必须要有涨停
+        isContinue = True
+        for data in dataArr[1+pre_move:10+pre_move]:
+            if data['pct_chg'] >= 9.7:
+                isContinue = False
+                break
+        if isContinue:
+            continue
+        limitUpCodes.append(codeName)
+    print('==============缩量暴跌***最近两天跌幅超过8个点，且当天成交量<昨天成交量*1.2，近10天有涨停: %d ===============' % len(limitUpCodes))
+    for name in limitUpCodes:
+        print(name)
+
 
 if __name__ == "__main__":
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
@@ -3203,23 +3344,25 @@ if __name__ == "__main__":
     # getBigStoke()
     # getZCXStoke()
 
-    volBigZ()
+    # volBigZ()
 
     # getDoubleStoke()
     # getDoubleStoke_strong()
     # continuousZT2Day()
     # volKLine_5()
     # getRecentlimitup(3)
-    getDoubleStoke()
-    getDoubleStoke_strong()
+    # getDoubleStoke()
+    # getDoubleStoke_strong()
     # volKLine()
     # getRecentlimitup(2)
     # getRecentlimitup(3)
 
-    zthc_5()
+    # zthc_5()
 
     # huang_cross250()
     # continuousZT2Day()
+
+    makeMoney()
     '''
     # 测试：用于寻找股票
     allStokeDate = getLocalKLineData(30)
