@@ -2970,7 +2970,7 @@ def continuousZT2Day():
         print(name)
 
 # 逻辑：5日线策略
-def volKLine(volType=5):
+def volKLine_5(volType=5):
     pre_move = 0
     dayNum = volType*2 + pre_move
     allStokeDate = getLocalKLineData(dayNum)
@@ -3215,7 +3215,6 @@ if __name__ == "__main__":
     # getZTwoDie()
     # getTodayZTPreNot()
     # getOZTD()
-    # volBigZ()
     # getBZ_Pre_10()
     # getDeffZD()
     # getRebackD()
@@ -3249,6 +3248,17 @@ if __name__ == "__main__":
     # getBigStoke()
     # getZCXStoke()
 
+
+    volBigZ()
+
+    # getDoubleStoke()
+    # getDoubleStoke_strong()
+    # continuousZT2Day()
+    # volKLine_5()
+    # getRecentlimitup(3)
+    getDoubleStoke()
+    getDoubleStoke_strong()
+    
     # volKLine()
     # getRecentlimitup(2)
     # getRecentlimitup(3)
