@@ -3125,7 +3125,7 @@ def zthc_5():
         print(name)
 # 提供数据
 def makeMoney():
-    pre_move = 3
+    pre_move = 0
     dayNum = 10+pre_move
 
     allStokeDate = getLocalKLineData(dayNum)
