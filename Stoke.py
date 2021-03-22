@@ -59,6 +59,7 @@ def getAllStokeInfo():
 
 # 读取本地所有股票信息
 def getCodeInfo():
+    getAllStokeInfo()
     saveDir = os.getcwd() + '/StokeInfo/'
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
@@ -463,6 +464,41 @@ def getHistoryDataByDate():
                 allStokeDate[code] = tempArr
                 
             return allStokeDate
+
+# 逻辑：获取最近几周周线数据, 偏移默认为0
+def getRecentWeekData(weekNum, pre_move=0):
+    # 返回的数据格式为字典，key为股票代码，value为该股票数组数据
+    allStokeDate = {}
+
+    # 第一步：找000001.SZ的最近所有周线交易日期
+    allWeekTradeDate = []
+    df = pro.weekly(ts_code='000001.SZ', fields='ts_code, trade_date')
+    if len(df.values) != 0:
+        for stokeData in df.values:
+            allWeekTradeDate.append(stokeData[1])
+
+    # 第二步：遍历最近几周的日期，获取所有股票信息
+    for date in allWeekTradeDate[pre_move:weekNum+pre_move]:
+        allData = pro.weekly(trade_date=date, fields='ts_code, trade_date, open, high, low, close, pct_chg, vol')
+        if len(allData.values) != 0:
+            for stokeData in allData.values:
+                code = stokeData[0]
+                dataArr = allStokeDate.get(code, [])
+                dic = {}
+                index = 1
+                dic['trade_date'] = stokeData[1]
+                dic['open'] = stokeData[index+1]
+                dic['high'] = stokeData[index+2]
+                dic['low'] = stokeData[index+3]
+                dic['close'] = stokeData[index+4]
+                dic['pct_chg'] = (stokeData[index+5])*100
+                dic['vol'] = stokeData[index+6]
+                
+                # 时间越小，在数组位置约靠后
+                dataArr.append(dic)
+                allStokeDate[code] = dataArr
+
+    return allStokeDate
     
 
 if __name__ == "__main__":
@@ -470,6 +506,7 @@ if __name__ == "__main__":
     # getQFQVerPrice()
     # 更新股票行情信息
     # getAllStokeInfo()
+    # getRecentWeekData(4, 0)
 
     # 每天都可以跑一次，把最新的日K数据拉取到本地
     addNewData()
