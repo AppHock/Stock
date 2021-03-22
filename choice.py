@@ -2673,7 +2673,7 @@ def ztfb():
     for name in limitUpCodes:
         print(name)
         
-# 逻辑：寻找支撑线的股
+# 逻辑：寻找支撑线的股，5日线、10日线、20日线
 '''
 【1】上涨趋势中，最近10天平均价收盘价，比前30-前20天平均收盘价，高出10个点
 【2】分别统计5、10、20支撑线的股
@@ -2753,7 +2753,9 @@ def getZCXStoke():
         
 # 逻辑：找出最近一直在上涨的股
 def getBigStoke():
-    dayNum = 200
+    # 8、16、25
+    pre_move = 16
+    dayNum = 200+pre_move
     allStokeDate = getLocalKLineData(dayNum)
     industryAndCode = Stoke.getCodeInfo()
     allCodes = list(allStokeDate.keys())
@@ -2762,23 +2764,23 @@ def getBigStoke():
     limitUpCodes_20 = []
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if '688' in code:
+        if ('688' in code) | ('300' in code):
             continue
 
         dataArr = allStokeDate[code]
         if len(dataArr) < dayNum:
             continue
         num = 30
-        # 10日
+        # 间隔日
         intervalDay = 5
 
-        pre_30_45 = calDayAverage(dataArr[num:num+intervalDay])
+        pre_30_45 = calDayAverage(dataArr[num+pre_move:num+intervalDay+pre_move])
         
         num -= intervalDay
-        pre_15_30 = calDayAverage(dataArr[num:num+intervalDay])
+        pre_15_30 = calDayAverage(dataArr[num+pre_move:num+intervalDay+pre_move])
         
         num -= intervalDay
-        pre_0_15 = calDayAverage(dataArr[num:num+intervalDay])
+        pre_0_15 = calDayAverage(dataArr[num+pre_move:num+intervalDay+pre_move])
 
         if (pre_15_30/pre_30_45) < 1.05:
             continue
@@ -2790,29 +2792,33 @@ def getBigStoke():
         
         
         # 剔除ST类股票
-        if 'ST' in industryAndCode[code]['name']:
+        codeName = industryAndCode[code]['name']
+        if 'ST' in codeName:
             continue
 
-        ave_price_5 = calDayAverage(dataArr[:5])
-        ave_price_10 = calDayAverage(dataArr[:10])
-        ave_price_20 = calDayAverage(dataArr[:20])
+        if '拓邦股份' in codeName:
+            print('ww')
 
-        closePrice = dataArr[0]['close']
+        ave_price_5 = calDayAverage(dataArr[pre_move:5+pre_move])
+        ave_price_10 = calDayAverage(dataArr[pre_move:10+pre_move])
+        ave_price_20 = calDayAverage(dataArr[pre_move:20+pre_move])
+
+        closePrice = dataArr[0+pre_move]['close']
 
         # 当天开盘价低于5日、高于10日线
     
         if (abs(calChange(ave_price_5, closePrice)) < 0.02) & (closePrice > ave_price_10) & (ave_price_10 > ave_price_20):
-            limitUpCodes_5.append(industryAndCode[code]['name'])
+            limitUpCodes_5.append(codeName)
             continue
         
         # 当天开盘价低于10日、高于20日线
         if (abs(calChange(ave_price_10, closePrice)) < 0.02) & (closePrice > ave_price_20):
-            limitUpCodes_10.append(industryAndCode[code]['name'])
+            limitUpCodes_10.append(codeName)
             continue
         
         # 当天开盘价低于20日
         if abs(calChange(ave_price_20, closePrice)) < 0.02:
-            limitUpCodes_20.append(industryAndCode[code]['name'])
+            limitUpCodes_20.append(codeName)
 
         # limitUpCodes.append(industryAndCode[code]['name'])
     # print('==============找出最近一直在上涨的股：%d===============' % len(limitUpCodes))
@@ -3354,6 +3360,53 @@ def getBigVol_2_5():
         for name in limitUpCodes:
             print(name)
 
+# 逻辑：一直沿着n日线上涨的股
+def follow_n_day_Line(allDay, nDay):
+    if (allDay < nDay):
+        print('Hei, it\'s wrong')
+    pre_move = 0
+    dayNum = allDay+nDay-1+pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes = []
+    allCodes = list(allStokeDate.keys())
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code) | ('300' in code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < dayNum:
+            continue
+
+        codeName = industryAndCode[code]['name']
+        # 剔除ST类股票
+        if 'ST' in codeName:
+            continue
+
+        # 最近多少天内一直沿着几日线走
+        # 当天的n日支撑线价格
+        
+        isContinue = False
+        for i in range(0+pre_move, allDay + pre_move):
+            # 当天收盘价数据
+            cu_close_Pri = dataArr[i]['close']
+            n_day_avePrice = calDayAverage(dataArr[i:i+nDay])
+            # 剔除当天收盘价*1.04 < 当天n日支撑线
+            if (cu_close_Pri * 1.02) < n_day_avePrice:
+                isContinue = True
+                break
+        if isContinue:
+            continue
+        limitUpCodes.append(codeName)
+    print('==============找出最近%d天一直沿着%d日支撑线上涨的股: %d只 ===============' % (allDay, nDay, len(limitUpCodes)))
+    for name in limitUpCodes:
+        print(name)
+        
+    
+    
+
+
 if __name__ == "__main__":
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
     # codes = '000517.SZ,000570.SZ,000659.SZ,000711.SZ,000796.SZ,000898.SZ,000955.SZ,000990.SZ,002098.SZ,002100.SZ,002103.SZ,002217.SZ,002274.SZ,002277.SZ,002342.SZ,002343.SZ,002374.SZ,002423.SZ,002470.SZ,002476.SZ,002492.SZ,002559.SZ,002591.SZ,002671.SZ,002694.SZ,002889.SZ,002903.SZ,002988.SZ,300025.SZ,300043.SZ,300048.SZ,300055.SZ,300062.SZ,300070.SZ,300173.SZ,300240.SZ,300272.SZ,300296.SZ,300303.SZ,300325.SZ,300350.SZ,300389.SZ,300647.SZ,300713.SZ,300819.SZ,300824.SZ,600027.SH,600110.SH,600116.SH,600125.SH,600159.SH,600269.SH,600287.SH,600382.SH,600540.SH,600576.SH,600642.SH,600692.SH,600707.SH,600715.SH,600757.SH,600780.SH,600792.SH,600794.SH,600796.SH,600869.SH,601008.SH,601368.SH,601588.SH,601700.SH,601869.SH,601992.SH,603012.SH,603315.SH,603356.SH,603567.SH,603585.SH,603598.SH,603918.SH'
@@ -3430,7 +3483,6 @@ if __name__ == "__main__":
 
     # getZTAgin()
     # ztfb()
-    # getBigStoke()
     # getZCXStoke()
 #    volBigZ()
 
@@ -3456,7 +3508,12 @@ if __name__ == "__main__":
     # continuousZT2Day()
 
     # makeMoney()
-    getBigVol_2_5()
+    # getBigVol_2_5()
+    
+    # 一直上涨策略
+    # getBigStoke()
+    # 一直沿着支撑线上涨
+    follow_n_day_Line(30, 5)
     '''
     # 测试：用于寻找股票
     allStokeDate = getLocalKLineData(30)
