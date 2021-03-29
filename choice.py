@@ -1140,26 +1140,22 @@ def getZTwoDie():
     # getCurrentChange(codeStr)
 
 
-# 逻辑：找当天涨停，前十天未涨停的股
+# 逻辑：找当天涨停，最近20个交易日收盘价最高
 '''
-【1】找当天涨停，前十天未涨停的股
-【2】当天收盘价 * 1.02 > 最近20个交易日的最高价
+【1】找当天涨停
+【2】最近20个交易日收盘价最高
 【3】剔除股价高于50
 【4】剔除市值低于30亿
 
 
 待考虑：当天涨停的交易量要比前5天的交易量平均高、如果当天资金趋势比前几天高很多不买，千万不要买连续上涨了3天的股
 '''
-def getTodayZTPreNot():
-    dayNum = 30
+def getTodayZTPreNot(dayNum):
     allStokeDate = getLocalKLineData(dayNum)
     limitUpCodes = []
+    industryAndCode =  Stoke.getCodeInfo()
     allCodes = list(allStokeDate.keys())
     num = 0
-    isTest = False
-    if isTest:
-        num = 3
-    codeAndChg = {}
     for i in range(len(allCodes)):
         code = allCodes[i]
         if (code[0:3] == '300') | (code[0:3] == '688'):
@@ -1169,41 +1165,36 @@ def getTodayZTPreNot():
         if len(dataArr) < dayNum:
             continue
 
-        if dataArr[num]['pct_chg'] < 9.9:
+        if dataArr[num]['pct_chg'] < 9.7:
             continue
 
-        # 【2】当天收盘价 * 1.02 > 最近20个交易日的最高价
-        if dataArr[num]['close'] * 1.02 < getMaxHighPrice(dataArr[num+1:num+1+20]):
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        # 剔除ST类股票
+        if 'ST' in codeName:
             continue
-        
-        # 【3】剔除股价高于50
-        if dataArr[num]['close'] > 50:
-            continue
-        if num-2 >= 0:
-            codeAndChg[code] = [code, dataArr[num-1]['pct_chg'], dataArr[num-2]['pct_chg']]
-        # 找当天涨停，前十天未涨停的股
-        datas = dataArr[num+1:num+1+10]
-        for i in range(len(datas)):
-            data = datas[i]
-            if data['pct_chg'] > 9.9:
+
+        isContinue = False
+        # 最近20天涨停次数
+        zt_num = 0
+        # 【2】最近20个交易日收盘价最高
+        for data in dataArr[:dayNum]:
+            if data['close'] > dataArr[0]['close']:
+                isContinue = True
                 break
-            if i == len(datas) - 1:
-                limitUpCodes.append(code)
-    print('===============以下是：找当天涨停，前十天未涨停的股===============')
-    codeStr = getStrWithList(limitUpCodes[:100])
-    codeAllInfo = Stoke.get_daily_basic(codeStr)
-    goodCodes = []
-    for key in codeAllInfo.keys():
-        codeInfo = codeAllInfo[key]
-        if codeInfo['total_mv'] > 400000:
-            goodCodes.append(key)
-    for code in goodCodes:
-        if isTest:
-            print(codeAndChg.get(code))
-        else:
-            print(code)
+            if data['pct_chg'] > 9.7:
+                zt_num += 1
+            
+            if zt_num > 3:
+                isContinue = True
+                break
         
-    # getCurrentChange(codeStr)
+        if isContinue:
+            continue    
+        limitUpCodes.append(codeName)
+        
+    print('==============以下是：找当天涨停，最近%d个交易日收盘价最高: %d ===============' % (dayNum, len(limitUpCodes)))
+    for name in limitUpCodes:
+        print(name)
 
 # 逻辑：追涨失败的找出几个出来
 def catchUpFail():
@@ -3518,19 +3509,14 @@ def weekStrategy(num, pre_move):
         
         isContinue = False
         for j in range(num):
-            # if j == pre_move:
-                # print(dataArr[pre_move*kLine]['trade_date'])
-            if (j+1) >= num:
-                break
             pct_j = dataArr[j]['pct_chg']
             
             # 最近一个周线涨幅必须超过5个点，剔除低于5个点的
-            if (j == 0) & (pct_j < 5):
+            if (j == 0) & (pct_j < 7):
                 isContinue = True
                 break
                 
-            pct_jj = dataArr[j+1]['pct_chg']
-            if (pct_j < 0) | (pct_jj < 0):
+            if (pct_j < 0):
                 isContinue = True
                 break
         if isContinue:
@@ -3558,7 +3544,7 @@ def getNewHighPrice(num):
         dataArr = allStokeDate[code]
         if len(dataArr) < dayNum:
             continue
-        
+
         codeName = industryAndCode.get(code, {}).get('name', '')
         # 剔除ST类股票
         if 'ST' in codeName:
@@ -3578,7 +3564,6 @@ def getNewHighPrice(num):
     print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodes_5)))
     for name in limitUpCodes_5:
         print(name)
->>>>>>> 0a8949aa4d106a8bedcbbb5a383247f9308c4789
 
 if __name__ == "__main__":
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
@@ -3686,7 +3671,7 @@ if __name__ == "__main__":
     # 一直上涨策略
     # getBigStoke()
     # 一直沿着支撑线上涨
-    follow_n_day_Line(30, 5)
+    # follow_n_day_Line(30, 5)
 
     # follow_n_day_Line(20, 10)
     # lianxu_week_z(3, 5)
@@ -3694,6 +3679,8 @@ if __name__ == "__main__":
     
     # 最强周线策略
     weekStrategy(4, 0)
+
+    # getTodayZTPreNot(30)
     '''
     # 测试：用于寻找股票
     allStokeDate = getLocalKLineData(30)
