@@ -3486,17 +3486,22 @@ def lianxu_week_z(num, kLine):
 
 # 逻辑：周线策略，目前最强
 def weekStrategy(num, pre_move):
-    allStokeDate = Stoke.getRecentWeekData(num, pre_move)
+    allStokeDate = Stoke.getRecentWeekData(num+1, pre_move)
     industryAndCode =  Stoke.getCodeInfo()
     limitUpCodes_5 = []
     allCodes = list(allStokeDate.keys())
+    tradeData = ''
     for i in range(len(allCodes)):
         code = allCodes[i]
         if ('688' in code) | ('300' in code):
             continue
 
         dataArr = allStokeDate[code]
-        if len(dataArr) < num:
+        if len(dataArr) < num+1:
+            continue
+
+        # 最早一周必须是跌
+        if dataArr[num]['pct_chg'] > 0:
             continue
         
         codeName = industryAndCode.get(code, {}).get('name', '')
@@ -3512,19 +3517,23 @@ def weekStrategy(num, pre_move):
             pct_j = dataArr[j]['pct_chg']
             
             # 最近一个周线涨幅必须超过5个点，剔除低于5个点的
-            if (j == 0) & (pct_j < 7):
+            if (j == 0) & (pct_j < 5):
                 isContinue = True
                 break
                 
-            if (pct_j < 0):
+            if (pct_j < 3):
                 isContinue = True
                 break
+
         if isContinue:
             continue
+        
+        if tradeData == '':
+            tradeData = dataArr[0]['trade_date']
 
         limitUpCodes_5.append(codeName)
         
-    print('==============连续%d个，周线上涨，最新一周涨幅超过5个点: %d只股 ===============' % (num, len(limitUpCodes_5)))
+    print('==============连续%d个，周线上涨，最新一周(%s)涨幅超过5个点: %d只股 ===============' % (num, tradeData, len(limitUpCodes_5)))
     for name in limitUpCodes_5:
         print(name)
 
@@ -3562,6 +3571,122 @@ def getNewHighPrice(num):
         limitUpCodes_5.append(codeName)
         
     print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodes_5)))
+    for name in limitUpCodes_5:
+        print(name)
+
+# 逻辑：boll线策略，低位放量大涨策略
+'''
+【1】当天放量上涨，涨幅超过1个点，成交量是最近前3天每天成交量的1.7倍
+【2】boll线width<0.15
+【3】最近10天，低于boll中轨线天数少于3天s
+【4】从低位开始涨上来，最近60个成交日，取最高，最低收盘价，当天收盘价<(最高+最低)/2
+'''
+def boll_low_rich(num, pre_move):
+    dayNum = num+pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes_5 = []
+    allCodes = list(allStokeDate.keys())
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < dayNum:
+            continue
+
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        # 剔除ST类股票
+        if 'ST' in codeName:
+            continue
+
+        isContinue = False
+        #【1】当天放量上涨，涨幅超过1个点，成交量是最近前3天每天成交量的2倍
+        if dataArr[pre_move]['pct_chg'] < 3:
+            continue
+        for data in dataArr[1+pre_move:4+pre_move]:
+            if dataArr[pre_move]['vol'] < (data['vol'] * 1.7):
+                isContinue = True
+                break
+        if isContinue:
+            continue
+
+        #【2】boll线width<0.15
+        # datas = dataArr[pre_move:pre_move+20]
+        # mb = calMB(datas)
+        # md = calMD(datas, mb)
+        # up = calUP(mb, md)
+        # dn = calDN(mb, md)
+        # width = calWIDTH(up, dn, mb)
+        # if width > 0.25:
+        #     continue
+
+        #【3】最近10天，低于boll中轨线天数少于3天
+        low_boll_num = 0
+        for i in range(10):
+            temp = i+1+pre_move
+            middleBollPrice = calMB(dataArr[temp:temp+20])
+            if dataArr[temp]['close'] < middleBollPrice:
+                low_boll_num += 1
+                if low_boll_num > 3:
+                    isContinue = True
+                    break
+        if isContinue:
+            continue
+
+        limitUpCodes_5.append(codeName)
+        
+    print('==============boll线策略，低位放量大涨策略的股票: %d ===============' % len(limitUpCodes_5))
+    for name in limitUpCodes_5:
+        print(name)
+
+# 逻辑：找连续涨停股
+def findZTStoke(zDay=1):
+    pre_move = 0
+    dayNum = zDay + 1 + pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes_5 = []
+    allCodes = list(allStokeDate.keys())
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code) | ('300' in code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < dayNum:
+            continue
+
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        # 剔除ST类股票
+        if ('ST' in codeName) | ('' == codeName):
+            continue
+
+        # 涨停天数
+        isContinue = False
+        for n in range(zDay):
+            if dataArr[pre_move+n]['pct_chg'] < 9.7:
+                isContinue = True
+                break
+        if isContinue:
+            continue
+        
+        if zDay < 5:
+            if dataArr[pre_move+zDay]['pct_chg'] > 9.7:
+                continue
+
+        # 收盘价目前最高
+        # for data in dataArr[pre_move+1:dayNum]:
+        #     if dataArr[pre_move]['close'] < data['close']:
+        #         isContinue = True
+        #         break
+        # if isContinue:
+        #     continue
+        
+        limitUpCodes_5.append(codeName)
+        
+    print('==============找出连续涨停%d天的股票: %d ===============' % (zDay, len(limitUpCodes_5)))
     for name in limitUpCodes_5:
         print(name)
 
@@ -3678,9 +3803,15 @@ if __name__ == "__main__":
     # getNewHighPrice(90)
     
     # 最强周线策略
-    weekStrategy(4, 0)
+    # weekStrategy(3, 0)
+
+    # boll_low_rich(30, 0)
 
     # getTodayZTPreNot(30)
+
+    # 涨停策略
+    for i in range(5):
+        findZTStoke(i+1)
     '''
     # 测试：用于寻找股票
     allStokeDate = getLocalKLineData(30)
