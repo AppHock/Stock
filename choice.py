@@ -3809,7 +3809,7 @@ if __name__ == "__main__":
 
     # getTodayZTPreNot(30)
 
-    # 涨停策略
+    # 连续涨停策略
     for i in range(5):
         findZTStoke(i+1)
     '''
