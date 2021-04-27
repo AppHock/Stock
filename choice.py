@@ -156,9 +156,20 @@ def cut(num, n):
     c = (c+"0"*n)[:n]
     return float(".".join([a, c]))
 
+
 # 逻辑：当天是否是一字板
 def isYiZiBan(data):
     return (data['close'] == data['open'] == data['high'] == data['low'])
+
+# 逻辑：股票代码数据转空格字符串
+def stokeArrayToString(codes):
+    codeStr = ''
+    for code in codes:
+        if codeStr == '':
+            codeStr = code[:6]
+        else:
+            codeStr += ' ' + code[:6]
+    print(codeStr)
 
 # 逻辑：取两个数组中，相同的元素
 def getSomeItemWithList(list_1, list_2):
@@ -2469,28 +2480,44 @@ def getMoneyWithMACD():
 '''
 思路：缩量跌，止跌开始涨
 '''
-def stopDBeginZ():
-    pre_move = 0
-    dayNum = 4+pre_move
+def stopDBeginZ(pre_move = 0):
+    dayNum = 10+pre_move
     allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodeName = []
     limitUpCodes = [] 
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if '300' not in code:
+        if '688' in code:
             continue
 
         dataArr = allStokeDate[code]
         if len(dataArr) < dayNum:
             continue
+
+        # 最近10天有大涨7个点以上
+        isContinue = True
+        for data in dataArr:
+            if data['pct_chg'] > 7:
+                isContinue = False
+                break
+        if isContinue:
+            continue
+        
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        # 剔除ST类股票
+        if ('ST' in codeName) | ('' == codeName):
+            continue
         
         if (dataArr[pre_move]['vol'] < dataArr[pre_move+1]['vol']) & (dataArr[pre_move+1]['vol'] < dataArr[pre_move+2]['vol']):
             if (dataArr[pre_move]['pct_chg'] < 0) & (dataArr[pre_move+1]['pct_chg'] < 0) & (dataArr[pre_move+2]['pct_chg'] < 0):
                 limitUpCodes.append(code)
+                limitUpCodeName.append(codeName)
     print('==============连续三天缩量跌===============')
-    for code in limitUpCodes:
+    for code in limitUpCodeName:
         print(code)
-
+    stokeArrayToString(limitUpCodes)
 '''
 思路：在即将开始一波大涨前，提前3-5天买入
 现象：前期一直低于250均线，突破250均线之后，经过30-40个交易日的回调，出现了一次放量上涨，一般3-5个工作日之后庄家开始拉升，放量涨之后几天跌的时必须买入
@@ -3597,6 +3624,7 @@ def boll_low_rich(num, pre_move):
     allStokeDate = getLocalKLineData(dayNum)
     industryAndCode =  Stoke.getCodeInfo()
     limitUpCodes_5 = []
+    limiupCodes = []
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
@@ -3645,12 +3673,13 @@ def boll_low_rich(num, pre_move):
                     break
         if isContinue:
             continue
-        
         limitUpCodes_5.append([codeName, dataArr[pre_move]['pct_chg']])
+        limiupCodes.append(code)
         
     print('==============boll线策略，低位放量大涨策略的股票: %d ===============' % len(limitUpCodes_5))
     for name in limitUpCodes_5:
         print(name[0], name[1])
+    stokeArrayToString(limiupCodes)
 
 # 逻辑：找连续涨停股
 def findZTStoke(zDay=1):
@@ -3904,14 +3933,20 @@ if __name__ == "__main__":
     # 最强周线策略
     # weekStrategy(3, 0)
 
+    # boll线策略，低位放量大涨策略
     boll_low_rich(30, 0)
 
     # getTodayZTPreNot(30)
 
+    # 缩量跌
+    # stopDBeginZ(0)
+
     # 连续涨停策略
     for i in range(5):
         findZTStoke(i+1)
-
+    # for i in range(5):
+    #     findZTStoke(i+1)
+    
     getDoubleStoke_strong()
     # adjust_ZD_stoke()
     # getNewPoBan()
