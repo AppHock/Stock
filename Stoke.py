@@ -23,7 +23,7 @@ token = '47aca0f52e01163f8fae34938cad4b776021ff2cc1678e557b744899' # 阿文的to
 tu.set_token(token)
 pro = tu.pro_api()
 globalPath = os.getcwd() + '/'
-
+globalPath += 'Stock/'
 # 逻辑：获得所有股票代码
 def getAllStokeCode():
     stokeCodes = []
@@ -39,7 +39,7 @@ def getAllStokeCode():
 # 逻辑：获得所有股票名称,代码,行业信息
 def getAllStokeInfo():
     data = pro.stock_basic(exchange='', list_status='L', fields='ts_code, name, industry')
-    saveDir = os.getcwd() + '/StokeInfo'
+    saveDir = globalPath + 'StokeInfo'
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
     path = saveDir + '/行业信息' + '.csv'
@@ -59,8 +59,8 @@ def getAllStokeInfo():
 
 # 读取本地所有股票信息
 def getCodeInfo():
-    getAllStokeInfo()
-    saveDir = os.getcwd() + '/StokeInfo/'
+    # getAllStokeInfo()
+    saveDir = globalPath + 'StokeInfo/'
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
     path = saveDir + "行业信息.csv"
@@ -114,13 +114,13 @@ def unixTime2LocalDate(timestamp, dateFormat="%Y-%m-%d %H:%M:%S"):
 # 逻辑：从本地获取数据
 def getLocalData():
     localData = {}
-    saveDir = os.getcwd() + '/DayKLine/'
+    saveDir = globalPath + 'DayKLine/'
     if os.path.exists(saveDir):
         a = os.listdir(saveDir)
         
         for j in a:
             csv_storage = []
-            saveDir = os.getcwd() + '/DayKLine/'
+            saveDir = globalPath + 'DayKLine/'
             path = saveDir+j
             # 剔除隐藏文件
             if j.startswith('.'):
@@ -154,7 +154,7 @@ def shareData(data):
 
 # 逻辑：获取最近dayNum天的所有股票的数据
 def getAllStokeData(dayNum):
-    saveDir = os.getcwd() + '/DayKLine/'
+    saveDir = globalPath + 'DayKLine/'
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
     allStokeDate = getRecentData(dayNum)
@@ -267,7 +267,7 @@ def writeNewDayData(dict):
     allLocalData = getLocalKLineData(0)
 
     # 将当前目录下的所有文件名称读取进来
-    saveDir = os.getcwd() + '/DayKLine/'
+    saveDir = globalPath + 'DayKLine/'
     fileNames = os.listdir(saveDir)
     for name in fileNames:
         # 每个csv文件全路径
@@ -310,8 +310,10 @@ def writeNewDayData(dict):
 
 # 逻辑：获得本地保存的数据的最新日期
 def getReTopDate():
+    print('getReTopDate123')
     with open(globalPath+'test.dat', 'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as m:
+            print('start')
             s = m.read(m.size())
             # 单引号转双引号
             bs = str(s, encoding = "utf8").replace('\'', '\"')
@@ -514,7 +516,7 @@ if __name__ == "__main__":
     getLocalData()
 
     # 从网络获取最近600天的数据保存在本地
-    # getAllStokeData(500)
+    # getAllStokeData(300)
     # getLocalData()
 
     # getLowPriceMainMoney_3()

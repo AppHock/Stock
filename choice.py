@@ -29,6 +29,7 @@ token = 'ed854a25065df86d7d0dddf9161abc26e7eff21ccd2ba4d0d3d3e28c'
 tu.set_token(token)
 pro = tu.pro_api()
 path = os.getcwd() + '/'
+path += 'Stock/'
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
 # 获取某只股的最新收盘价
@@ -154,6 +155,10 @@ def cut(num, n):
     a, b, c = numStr.partition('.')
     c = (c+"0"*n)[:n]
     return float(".".join([a, c]))
+
+# 逻辑：当天是否是一字板
+def isYiZiBan(data):
+    return (data['close'] == data['open'] == data['high'] == data['low'])
 
 # 逻辑：取两个数组中，相同的元素
 def getSomeItemWithList(list_1, list_2):
@@ -2849,6 +2854,7 @@ def getDoubleStoke_strong():
     industryAndCode = Stoke.getCodeInfo()
     allCodes = list(allStokeDate.keys())
     limitUpCodes = []
+    codeString = ''
     for i in range(len(allCodes)):
         code = allCodes[i]
         if '688' in code:
@@ -2888,9 +2894,14 @@ def getDoubleStoke_strong():
             continue
         if (chage < 0.35) & (chage > -0.05):
             limitUpCodes.append(industryAndCode[code]['name'])
+            if (codeString == ''):
+                codeString = code[:6]
+            else:
+                codeString += ' ' + code[:6]
     print('==============找出从250均线附近涨停，未来可以翻倍：%d ===============' % len(limitUpCodes))
     for name in limitUpCodes:
         print(name)
+    print(codeString)
 
 # 逻辑：找出从250均线附近开始上涨的票，未来2周可以50个点
 '''
@@ -3634,12 +3645,12 @@ def boll_low_rich(num, pre_move):
                     break
         if isContinue:
             continue
-
-        limitUpCodes_5.append(codeName)
+        
+        limitUpCodes_5.append([codeName, dataArr[pre_move]['pct_chg']])
         
     print('==============boll线策略，低位放量大涨策略的股票: %d ===============' % len(limitUpCodes_5))
     for name in limitUpCodes_5:
-        print(name)
+        print(name[0], name[1])
 
 # 逻辑：找连续涨停股
 def findZTStoke(zDay=1):
@@ -3689,6 +3700,96 @@ def findZTStoke(zDay=1):
     print('==============找出连续涨停%d天的股票: %d ===============' % (zDay, len(limitUpCodes_5)))
     for name in limitUpCodes_5:
         print(name)
+'''
+【0】剔除最近10天涨幅超过50个点的
+【1】涨停，后面两天跌幅超过5个点
+【2】
+'''
+def adjust_ZD_stoke(pre_move=0):
+    dayNum = 10 + pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes_5 = []
+    allCodes = list(allStokeDate.keys())
+    codeString = ''
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code) | ('300' in code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < dayNum:
+            continue
+
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        # 剔除ST类股票
+        if ('ST' in codeName) | ('' == codeName):
+            continue
+
+        # 剔除最近10天涨幅超过40个点的
+        if (dataArr[pre_move]['close']/dataArr[dayNum-1]['close']) > 1.4:
+            continue
+
+        if (dataArr[pre_move+2]['pct_chg'] < 9.7) & (dataArr[pre_move+3]['pct_chg'] < 9.7):
+            continue
+        
+        if (dataArr[pre_move]['pct_chg'] < -5) | ((dataArr[pre_move]['pct_chg'] + dataArr[pre_move+1]['pct_chg']) < -5):
+            limitUpCodes_5.append(codeName)
+
+            if (codeString == ''):
+                codeString = code[:6]
+            else:
+                codeString += ' ' + code[:6]
+
+    print('==============找出最近涨停调整的股票: %d ===============' % len(limitUpCodes_5))
+    for name in limitUpCodes_5:
+        print(name)
+    print(codeString)
+
+# 找刚上市的股，当天首次破板的股
+def getNewPoBan(pre_move=0):
+    dayNum = 30 + pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes_5 = []
+    allCodes = list(allStokeDate.keys())
+    codeString = ''
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code) | ('300' in code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if (len(dataArr) == dayNum) | (len(dataArr) == 0):
+            # 剔除已经上市30天的股票，不可能出现30个交易日连续涨停
+            continue
+        
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        if ('ST' in codeName) | ('' == codeName):
+            continue
+
+        # 当天非一字板
+        if isYiZiBan(dataArr[0]):
+            continue
+
+        isContinue = False
+        for data in dataArr[:-1]:
+            if not isYiZiBan(data):
+                isContinue = True
+                break
+        if isContinue:
+            continue
+        
+        limitUpCodes_5.append(codeName)
+        if (codeString == ''):
+            codeString = code[:6]
+        else:
+            codeString += ' ' + code[:6]
+
+    print('==============找出刚上市首个破板的股票: %d ===============' % len(limitUpCodes_5))
+    for name in limitUpCodes_5:
+        print(name)
+    print(codeString)
 
 if __name__ == "__main__":
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
@@ -3775,7 +3876,6 @@ if __name__ == "__main__":
     # volKLine_5()
     # getRecentlimitup(3)
 #    getDoubleStoke()
-#    getDoubleStoke_strong()
     
 
     # volKLine()
@@ -3783,7 +3883,6 @@ if __name__ == "__main__":
     # getRecentlimitup(3)
 
     # getDoubleStoke()
-    # getDoubleStoke_strong()
     # zthc_5()
 
     # huang_cross250()
@@ -3805,29 +3904,14 @@ if __name__ == "__main__":
     # 最强周线策略
     # weekStrategy(3, 0)
 
-    # boll_low_rich(30, 0)
+    boll_low_rich(30, 0)
 
     # getTodayZTPreNot(30)
 
     # 连续涨停策略
     for i in range(5):
         findZTStoke(i+1)
-    '''
-    # 测试：用于寻找股票
-    allStokeDate = getLocalKLineData(30)
-    limitUpCodes = [] 
-    allCodes = list(allStokeDate.keys())
-    limitUpCodes = []
-    
-    for i in range(len(allCodes)):
-        code = allCodes[i]
-        if '300' not in code:
-            continue
 
-        dataArr = allStokeDate[code]
-        if len(dataArr) < 10:
-            print(code)
-    # print('==============找最近跌破250均线，而且还出现了封板跌停的票===============')
-    # for code in limitUpCodes:
-    #     print(code)
-    '''
+    getDoubleStoke_strong()
+    # adjust_ZD_stoke()
+    # getNewPoBan()
