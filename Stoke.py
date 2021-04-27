@@ -13,17 +13,21 @@ import time
 import base64
 import json
 import pandas as pd
+from pathlib import Path
 
-g_currentDir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(g_currentDir + '/../../../')
+# g_currentDir = os.path.dirname(os.path.abspath(__file__))
+# sys.path.append(g_currentDir + '/../../../')
 
 # token = 'ed854a25065df86d7d0dddf9161abc26e7eff21ccd2ba4d0d3d3e28c' # 大鹏的token
 token = '47aca0f52e01163f8fae34938cad4b776021ff2cc1678e557b744899' # 阿文的token
 
 tu.set_token(token)
 pro = tu.pro_api()
-globalPath = os.getcwd() + '/'
-globalPath += 'Stock/'
+# globalPath = os.getcwd() + '/'
+# globalPath += 'Stock/'
+# globalPath = '/Users/chengpeng2/Desktop/test/'
+globalPath = Path('C:/Users/Administrator/Desktop/Python/')
+
 # 逻辑：获得所有股票代码
 def getAllStokeCode():
     stokeCodes = []
@@ -140,10 +144,10 @@ def getLocalData():
 
 # 逻辑：将本地读取的数据缓存在临时内存中
 def shareData(data):
-    with open("test.dat", "w") as f:
+    with open(globalPath + 'test.dat', "w+") as f:
         f.write('\x00' * len(data))
  
-    with open('test.dat', 'r+') as f:
+    with open(globalPath + 'test.dat', 'r+') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_WRITE)) as m:
             m.write(data)
             m.flush()
@@ -511,12 +515,12 @@ if __name__ == "__main__":
     # getRecentWeekData(4, 0)
 
     # 每天都可以跑一次，把最新的日K数据拉取到本地
-    addNewData()
+    # addNewData()
     # 每次开始做回归测试时，需要先本地数据全部读取到内存中，以便其他进场获取数据
-    getLocalData()
+    # getLocalData()
 
     # 从网络获取最近600天的数据保存在本地
-    # getAllStokeData(300)
-    # getLocalData()
+    getAllStokeData(30)
+    getLocalData()
 
     # getLowPriceMainMoney_3()
