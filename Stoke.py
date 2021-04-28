@@ -15,6 +15,8 @@ import json
 import pandas as pd
 from pathlib import Path
 
+import platform
+
 # g_currentDir = os.path.dirname(os.path.abspath(__file__))
 # sys.path.append(g_currentDir + '/../../../')
 
@@ -24,7 +26,8 @@ token = '47aca0f52e01163f8fae34938cad4b776021ff2cc1678e557b744899' # 阿文的to
 
 tu.set_token(token)
 pro = tu.pro_api()
-globalSys_Mac = True
+globalSys_Mac = platform.system().lower() == 'darwin'
+print('当前操作系统:%s' % platform.system().lower())
 
 # 逻辑：路径转换
 def pathToSys(path):
@@ -35,7 +38,9 @@ def pathToSys(path):
 
 globalPath = pathToSys(os.getcwd() + '/Desktop/test/')
 # globalPath = '/Users/chengpeng2/Desktop/test/'
-# globalPath = 'C:\\Users\\Administrator\\Desktop\\Python\\'
+# globalPath = 'C:\\Users\\Administrator\\Desktop\\股票数据\\'
+if not globalSys_Mac:
+    globalPath = 'C:\\Users\\Administrator\\Desktop\\股票数据\\'
 globalDataPath = pathToSys(globalPath + 'test.dat')
 
 # 逻辑：获得所有股票代码
@@ -519,6 +524,7 @@ def getRecentWeekData(weekNum, pre_move=0):
     
 
 if __name__ == "__main__":
+    print('需要创建的文件路径%s'% globalPath)
     if not os.path.exists(globalPath):
         print('首次运行，创建路径文件')
         os.makedirs(globalPath)

@@ -9,6 +9,7 @@ import mmap
 import contextlib
 import json
 import sys, os
+import platform
 
 '''
 保存最近5年A股所有的日K线数据
@@ -28,7 +29,8 @@ import sys, os
 token = 'ed854a25065df86d7d0dddf9161abc26e7eff21ccd2ba4d0d3d3e28c'
 tu.set_token(token)
 pro = tu.pro_api()
-globalSys_Mac = True
+globalSys_Mac = platform.system().lower() == 'darwin'
+print('当前操作系统:%s' % platform.system().lower())
 
 # 逻辑：路径转换
 def pathToSys(path):
@@ -38,6 +40,8 @@ def pathToSys(path):
         return path.replace('/', '\\')
 
 globalPath = pathToSys(os.getcwd() + '/Desktop/test/')
+if not globalSys_Mac:
+    globalPath = 'C:\\Users\\Administrator\\Desktop\\股票数据\\'
 globalDataPath = pathToSys(globalPath + 'test.dat')
 # globalPath = '/Users/chengpeng2/Desktop/test/'
 # globalPath = 'C:\\Users\\Administrator\\Desktop\\Python\\'
