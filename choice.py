@@ -28,8 +28,19 @@ import sys, os
 token = 'ed854a25065df86d7d0dddf9161abc26e7eff21ccd2ba4d0d3d3e28c'
 tu.set_token(token)
 pro = tu.pro_api()
-path = os.getcwd() + '/'
-path += 'Stock/'
+globalSys_Mac = True
+
+# 逻辑：路径转换
+def pathToSys(path):
+    if globalSys_Mac:
+        return path
+    else:
+        return path.replace('/', '\\')
+
+globalPath = pathToSys(os.getcwd() + '/Desktop/test/')
+globalDataPath = pathToSys(globalPath + 'test.dat')
+# globalPath = '/Users/chengpeng2/Desktop/test/'
+# globalPath = 'C:\\Users\\Administrator\\Desktop\\Python\\'
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
 # 获取某只股的最新收盘价
@@ -644,8 +655,7 @@ def ZZDD(dayNum):
         
 # 逻辑：获得本地最近dayNum天的交易日K线数据
 def getLocalKLineData(dayNum):
-    fileUrl = path + 'test.dat'
-    with open(fileUrl, 'r') as f:
+    with open(globalDataPath, 'r') as f:
         with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as m:
             s = m.read(m.size())
             # 单引号转双引号
