@@ -36,9 +36,8 @@ def pathToSys(path):
     else:
         return path.replace('/', '\\')
 
-globalPath = pathToSys(os.getcwd() + '/Desktop/test/')
-# globalPath = '/Users/chengpeng2/Desktop/test/'
-# globalPath = 'C:\\Users\\Administrator\\Desktop\\股票数据\\'
+# globalPath = pathToSys(os.getcwd() + '/Desktop/test/')
+globalPath = pathToSys(os.getcwd() + '/')
 if not globalSys_Mac:
     globalPath = 'C:\\Users\\Administrator\\Desktop\\股票数据\\'
 globalDataPath = pathToSys(globalPath + 'test.dat')
@@ -542,7 +541,7 @@ if __name__ == "__main__":
     # getLocalData()
 
     # 从网络获取最近600天的数据保存在本地
-    getAllStokeData(30)
+    getAllStokeData(100)
     getLocalData()
     print('文件保存路径:%s' % globalPath)
     # getLowPriceMainMoney_3()

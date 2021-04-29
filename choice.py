@@ -39,12 +39,12 @@ def pathToSys(path):
     else:
         return path.replace('/', '\\')
 
-globalPath = pathToSys(os.getcwd() + '/Desktop/test/')
+# globalPath = pathToSys(os.getcwd() + '/Desktop/test/')
+globalPath = pathToSys(os.getcwd() + '/')
 if not globalSys_Mac:
     globalPath = 'C:\\Users\\Administrator\\Desktop\\股票数据\\'
 globalDataPath = pathToSys(globalPath + 'test.dat')
-# globalPath = '/Users/chengpeng2/Desktop/test/'
-# globalPath = 'C:\\Users\\Administrator\\Desktop\\Python\\'
+
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
 # 获取某只股的最新收盘价
@@ -185,6 +185,16 @@ def stokeArrayToString(codes):
         else:
             codeStr += ' ' + code[:6]
     print(codeStr)
+
+# 逻辑：从数组中找出，出现多少个涨停的
+def isExistZTNum(datas, num=0):
+    ztNum = 0
+    for data in datas:
+        if data['pct_chg'] > 9.7:
+            ztNum += 1
+            if ztNum >= num:
+                return True
+    return False
 
 # 逻辑：取两个数组中，相同的元素
 def getSomeItemWithList(list_1, list_2):
@@ -2722,13 +2732,15 @@ def ztfb():
 【1】上涨趋势中，最近10天平均价收盘价，比前30-前20天平均收盘价，高出10个点
 【2】分别统计5、10、20支撑线的股
 '''
-def getZCXStoke():
-    pre_move = 0
+def getZCXStoke(pre_move = 0):
     dayNum = 90+pre_move
     allStokeDate = getLocalKLineData(dayNum)
     industryAndCode =  Stoke.getCodeInfo()
     limitUpCodes_5 = []
     limitUpCodes_10 = []
+    limitUpCodesName_20 = []
+    # limitUpCpdesStr_5 = ''
+    # limitUpCpdesStr_10 = ''
     limitUpCodes_20 = []
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
@@ -2738,6 +2750,10 @@ def getZCXStoke():
 
         dataArr = allStokeDate[code]
         if len(dataArr) < dayNum:
+            continue
+        
+        # 剔除，最近20天，涨幅找过9.7个点天数是否超过4天的
+        if (isExistZTNum(dataArr[:30], 4)):
             continue
 
         # 前30-前20天平均收盘价
@@ -2776,11 +2792,12 @@ def getZCXStoke():
         if (openPrice*1.01 <= ave_price_10) & (openPrice > ave_price_20):
             limitUpCodes_10.append(industryAndCode[code]['name'])
             continue
-    
+
         # 当天开盘价低于20日
-        if openPrice <= ave_price_20:
-            limitUpCodes_20.append(industryAndCode[code]['name'])
-        
+        if abs(calChange(ave_price_20, openPrice)) < 0.02:
+            limitUpCodesName_20.append(industryAndCode[code]['name'])
+            limitUpCodes_20.append(code)
+
         
         
     print('==============回调到5日均线: %d ===============' % len(limitUpCodes_5))
@@ -2794,6 +2811,7 @@ def getZCXStoke():
     print('==============回调到20日均线: %d ===============' % len(limitUpCodes_20))
     for name in limitUpCodes_20:
         print(name)
+    print(stokeArrayToString(limitUpCodes_20))
         
 # 逻辑：找出最近一直在上涨的股
 def getBigStoke():
@@ -3701,7 +3719,8 @@ def findZTStoke(zDay=1):
     dayNum = zDay + 1 + pre_move
     allStokeDate = getLocalKLineData(dayNum)
     industryAndCode =  Stoke.getCodeInfo()
-    limitUpCodes_5 = []
+    limitUpCodeNames = []
+    limitUpCodes = []
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
@@ -3738,11 +3757,13 @@ def findZTStoke(zDay=1):
         # if isContinue:
         #     continue
         
-        limitUpCodes_5.append(codeName)
+        limitUpCodeNames.append(codeName)
+        limitUpCodes.append(code)
         
-    print('==============找出连续涨停%d天的股票: %d ===============' % (zDay, len(limitUpCodes_5)))
-    for name in limitUpCodes_5:
+    print('==============找出连续涨停%d天的股票: %d ===============' % (zDay, len(limitUpCodeNames)))
+    for name in limitUpCodeNames:
         print(name)
+    stokeArrayToString(limitUpCodes)
 '''
 【0】剔除最近10天涨幅超过50个点的
 【1】涨停，后面两天跌幅超过5个点
@@ -3910,7 +3931,7 @@ if __name__ == "__main__":
 
     # getZTAgin()
     # ztfb()
-    # getZCXStoke()
+    getZCXStoke()
 #    volBigZ()
 
     # getDoubleStoke()
