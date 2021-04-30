@@ -2297,7 +2297,7 @@ def getRecDown250K():
 
 '''
 思路：放巨量上涨，之后会有新高
-【1】当日成交量是上个交易日2倍以上，最近20天成交量最好
+【1】当日成交量是上个交易日2倍以上，最近20天成交量最高
 【2】当日涨幅>3
 【3】如果当天交易量比最近30天都高，这个是很好的
 
@@ -2309,10 +2309,11 @@ def getRecDown250K():
 【2】如果当天是红色的倒锤头最好，放量很高，如果是上下影线都上的红柱，这个不好看
 【3】如果最近半年已经有了两个双顶，基本不考虑，压力位太重，
 '''
-def bigVolBigZ():
+def bigVolBigZ(pre_move = 0):
     dayNum = 20
-    allStokeDate = getLocalKLineData(dayNum)
+    allStokeDate = getLocalKLineData(dayNum+pre_move)
     allCodes = list(allStokeDate.keys())
+    industryAndCode = Stoke.getCodeInfo()
     limitUpCodes = []
     for i in range(len(allCodes)):
         code = allCodes[i]
@@ -2320,8 +2321,12 @@ def bigVolBigZ():
             print('www')
 
         # 剔除非创业板股票
-        if (code[0:3] != '300') :
-            del allStokeDate[code]
+        if (code[0:3] == '688'):
+            # del allStokeDate[code]
+            continue
+
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        if 'ST' in codeName:
             continue
 
         # 剔除交易日还未达到要求的股票
@@ -2330,36 +2335,36 @@ def bigVolBigZ():
             continue
 
         # 当日成交量是上个交易日2倍以上
-        if dataArr[0]['vol'] < dataArr[1]['vol'] * 2:
+        if dataArr[0+pre_move]['vol'] < dataArr[1+pre_move]['vol'] * 2:
             continue
         
         # 最近20天成交量最好
         todayVolIsBig_20 = True
-        for data in dataArr[1:]:
-            if dataArr[0]['vol'] < data['vol']:
+        for data in dataArr[1+pre_move:]:
+            if dataArr[0+pre_move]['vol'] < data['vol']:
                 todayVolIsBig_20 = False
                 break
         if todayVolIsBig_20 == False:
             continue
 
         # 当日涨幅>3
-        if dataArr[0]['pct_chg'] < 3:
+        if dataArr[0+pre_move]['pct_chg'] < 3:
             continue
         
-        limitUpCodes.append(code)            
-    print('==============放巨量上涨，之后会有新高:%d===============' % len(limitUpCodes))
-    for code in limitUpCodes:
-        print(code)
+        limitUpCodes.append(codeName)            
+    print('==============前移%d天，放巨量上涨，之后会有新高:%d===============' % (pre_move, len(limitUpCodes)))
+    for codeName in limitUpCodes:
+        print(codeName)
 '''
 1、当天收盘价在最近10天最高，今天成交量比最近10天都高
 2、当日成交量比最近10天都高，当天涨幅>3，最近60天内收盘价比当天高的要少于20天，低于当天收盘价的要超过35天，而且最近30天最高收盘价 < 当天收盘价*1.38
 '''
-def bigVolBigZ_New():
+def bigVolBigZ_New(pre_move = 0):
     # 向前偏移天数，方便测试
-    pre_move = 0
-    dayNum = 250+pre_move
+    dayNum = 60+pre_move
     allStokeDate = getLocalKLineData(dayNum)
     allCodes = list(allStokeDate.keys())
+    industryAndCode = Stoke.getCodeInfo()
     limitUpCodes1 = []
     limitUpCodes2 = []
     for i in range(len(allCodes)):
@@ -2367,11 +2372,13 @@ def bigVolBigZ_New():
         if '300415' in code:
             print('222')
         # 剔除非创业板股票
-        if (code[0:3] != '300') :
-            del allStokeDate[code]
+        if (code[0:3] == '688') :
+            # del allStokeDate[code]
             continue
-
         
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        if 'ST' in codeName:
+            continue
 
         # 剔除交易日还未达到要求的股票
         dataArr = allStokeDate[code]
@@ -2398,7 +2405,7 @@ def bigVolBigZ_New():
         #     continue
 
         # 剔除当前已经涨的很多的票
-        if (dataArr[0]['close'] / dataArr[60]['close']) > 1.4:
+        if (dataArr[0+pre_move]['close'] / dataArr[-1]['close']) > 1.4:
             continue
 
         # 最近60高于当天收盘价天数
@@ -2408,7 +2415,7 @@ def bigVolBigZ_New():
         # 最近30天内的最高收盘价
         max_close_30 = 0
         time = 0
-        for data in dataArr[1+pre_move:60+pre_move]:
+        for data in dataArr[1+pre_move:]:
             if time < 30:
                 if max_close_30 < data['close']:
                     max_close_30 = data['close']
@@ -2420,8 +2427,8 @@ def bigVolBigZ_New():
         # 最近60天内收盘价比当天高的要少于20天, 低于当天收盘价的要超过35天, 最近30天最高收盘价 < 当天收盘价*1.38
         if (bigCloseNum < 20) &(lowCloseNum > 35) & (max_close_30 < dataArr[0]['close'] * 1.38):
             # 剔除今天涨幅超过16个点的
-            if dataArr[0]['pct_chg'] < 16:
-                limitUpCodes2.append(code)
+            if dataArr[0+pre_move]['pct_chg'] < 16:
+                limitUpCodes2.append(codeName)
 
         # 当天收盘价在最近10天最高，今天成交量比最近10天都高
         tempNum = 0
@@ -2429,16 +2436,17 @@ def bigVolBigZ_New():
             if (dataArr[0+pre_move]['vol'] > data['vol']) &(dataArr[0+pre_move]['close'] > data['close']):
                 tempNum += 1
                 if tempNum == 9:
-                    limitUpCodes1.append(code)        
-    print('==============放巨量上涨，之后会有新高:%d===============' % len(limitUpCodes1 + limitUpCodes2))
-    print('最近10天，当天收盘价和成交量都是最高')
-    for code in limitUpCodes1:
-        print(code)
+                    limitUpCodes1.append(codeName)        
+    # print('==============放巨量上涨，之后会有新高:%d===============' % len(limitUpCodes1 + limitUpCodes2))
+    print('==============前移%d天，新策略，放巨量上涨，之后会有新高:%d===============' % (pre_move, len(limitUpCodes2)))
+    # print('最近10天，当天收盘价和成交量都是最高')
+    # for codeName in limitUpCodes1:
+    #     print(codeName)
     # getCurrentChange(getStrWithList(limitUpCodes1))
     
     print('目前处于即将大幅上涨')
-    for code in limitUpCodes2:
-        print(code)
+    for codeName in limitUpCodes2:
+        print(codeName)
     # getCurrentChange(getStrWithList(limitUpCodes2))
 
     
@@ -3931,7 +3939,7 @@ if __name__ == "__main__":
 
     # getZTAgin()
     # ztfb()
-    getZCXStoke()
+    
 #    volBigZ()
 
     # getDoubleStoke()
@@ -3968,20 +3976,26 @@ if __name__ == "__main__":
     # 最强周线策略
     # weekStrategy(3, 0)
 
+    # 20日支撑线
+    # getZCXStoke()
     # boll线策略，低位放量大涨策略
-    boll_low_rich(30, 0)
-
+    # boll_low_rich(30, 0)
+    # 放巨量上涨，之后会有新高
+    for i in range(3):
+        bigVolBigZ(i)
+        bigVolBigZ_New(i)
+        
     # getTodayZTPreNot(30)
 
     # 缩量跌
     # stopDBeginZ(0)
 
     # 连续涨停策略
-    for i in range(5):
-        findZTStoke(i+1)
+    # for i in range(5):
+    #     findZTStoke(i+1)
     # for i in range(5):
     #     findZTStoke(i+1)
     
-    getDoubleStoke_strong()
+    # getDoubleStoke_strong()
     # adjust_ZD_stoke()
     # getNewPoBan()
