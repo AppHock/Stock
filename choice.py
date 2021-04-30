@@ -228,6 +228,52 @@ def marketCapAboveBillion(codes):
         print(code)
     return needCodes
 
+# 逻辑：通过偏移日期，找出改股的收益
+def pre_move_real_income(pre_move=0, codes=[], codeNames=[]):
+    if pre_move == 0:
+        return
+    
+    if (len(codes) == 0) & (len(codeNames) == 0):
+        return
+    
+    allStokeDate = getLocalKLineData(pre_move)
+    codeAndcodeName =  Stoke.getCodeAndCodeName()
+    codeNameAndCode = {v:k for k,v in codeAndcodeName.items()}
+    limitUpCodes = []
+
+    if len(codes) != 0:
+        objs = codes
+    else:
+        objs = codeNames
+
+    for obj in objs:
+        if '.' in obj:
+            # obj是股票代码
+            code = obj
+            codeName = codeAndcodeName.get(code, '')
+        else:
+            # obj股票名称
+            code = codeNameAndCode.get(obj, '')
+            if code == '':
+                continue
+            codeName = obj
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < pre_move:
+            continue
+        change = calChange(dataArr[-1]['close'], dataArr[0]['close'])
+        limitUpCodes.append([codeName, change])
+    print('偏移%d天之后的，收益情况一栏表' % pre_move)
+    for dataInfo in limitUpCodes:
+        change = dataInfo[1]
+        if change > 0:
+            str = '赚'
+        else:
+            str = '亏'
+        print('【%s】收益：%s%f个点' % (dataInfo[0], str, change*100))
+
+    
+
 # 逻辑：根据股票代码获得当天涨跌幅
 def getCurrentChange(codes):
     currentDate = unixTime2LocalDate(getCurrentUnixTime(), "%Y%m%d")
@@ -2310,19 +2356,19 @@ def getRecDown250K():
 【3】如果最近半年已经有了两个双顶，基本不考虑，压力位太重，
 '''
 def bigVolBigZ(pre_move = 0):
-    dayNum = 20
-    allStokeDate = getLocalKLineData(dayNum+pre_move)
+    dayNum = 20+pre_move
+    allStokeDate = getLocalKLineData(dayNum)
     allCodes = list(allStokeDate.keys())
     industryAndCode = Stoke.getCodeInfo()
     limitUpCodes = []
+    limitUpCodeNames = []
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if '300553' in code:
-            print('www')
+        if '300350' in code:
+            print('')
 
-        # 剔除非创业板股票
+        # 剔除科创板股票
         if (code[0:3] == '688'):
-            # del allStokeDate[code]
             continue
 
         codeName = industryAndCode.get(code, {}).get('name', '')
@@ -2338,23 +2384,29 @@ def bigVolBigZ(pre_move = 0):
         if dataArr[0+pre_move]['vol'] < dataArr[1+pre_move]['vol'] * 2:
             continue
         
-        # 最近20天成交量最好
-        todayVolIsBig_20 = True
+        # 最近20天成交量最高，当天收盘价20天内最高
+        isContinue = True
         for data in dataArr[1+pre_move:]:
-            if dataArr[0+pre_move]['vol'] < data['vol']:
-                todayVolIsBig_20 = False
+            if dataArr[0+pre_move]['close'] < data['close']:
+                isContinue = False
                 break
-        if todayVolIsBig_20 == False:
+
+            if dataArr[0+pre_move]['vol'] < data['vol']:
+                isContinue = False
+                break
+        if isContinue == False:
             continue
 
         # 当日涨幅>3
         if dataArr[0+pre_move]['pct_chg'] < 3:
             continue
         
-        limitUpCodes.append(codeName)            
+        limitUpCodes.append(code)
+        limitUpCodeNames.append(codeName)
     print('==============前移%d天，放巨量上涨，之后会有新高:%d===============' % (pre_move, len(limitUpCodes)))
-    for codeName in limitUpCodes:
+    for codeName in limitUpCodeNames:
         print(codeName)
+    pre_move_real_income(pre_move, [], limitUpCodeNames)
 '''
 1、当天收盘价在最近10天最高，今天成交量比最近10天都高
 2、当日成交量比最近10天都高，当天涨幅>3，最近60天内收盘价比当天高的要少于20天，低于当天收盘价的要超过35天，而且最近30天最高收盘价 < 当天收盘价*1.38
@@ -3680,8 +3732,11 @@ def boll_low_rich(num, pre_move):
         if 'ST' in codeName:
             continue
 
+        if '600499' in code:
+            print('')
+
         isContinue = False
-        #【1】当天放量上涨，涨幅超过1个点，成交量是最近前3天每天成交量的2倍
+        #【1】当天放量上涨，涨幅超过3个点，成交量是最近前3天每天成交量的2倍
         if dataArr[pre_move]['pct_chg'] < 3:
             continue
         for data in dataArr[1+pre_move:4+pre_move]:
@@ -3707,6 +3762,79 @@ def boll_low_rich(num, pre_move):
             temp = i+1+pre_move
             middleBollPrice = calMB(dataArr[temp:temp+20])
             if dataArr[temp]['close'] < middleBollPrice:
+                low_boll_num += 1
+                if low_boll_num > 3:
+                    isContinue = True
+                    break
+        if isContinue:
+            continue
+        limitUpCodes_5.append([codeName, dataArr[pre_move]['pct_chg']])
+        limiupCodes.append(code)
+        
+    print('==============boll线策略，低位放量大涨策略的股票: %d ===============' % len(limitUpCodes_5))
+    for name in limitUpCodes_5:
+        print(name[0], name[1])
+    stokeArrayToString(limiupCodes)
+
+# 逻辑：boll线策略，放量涨，目前收盘价最近10天最高
+'''
+【1】当天放量上涨，涨幅超过3个点
+【2】目前收盘价最近10天最高
+【3】最近10天，低于boll中轨线天数少于3天
+【4】从低位开始涨上来，最近60个成交日，取最高，最低收盘价，当天收盘价<(最高+最低)/2
+'''
+def boll_low_rich_newPrice(num, pre_move):
+    dayNum = num+pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes_5 = []
+    limiupCodes = []
+    allCodes = list(allStokeDate.keys())
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < dayNum:
+            continue
+
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        # 剔除ST类股票
+        if 'ST' in codeName:
+            continue
+
+        if '600499' in code:
+            print('')
+
+        isContinue = False
+        #【1】当天放量上涨，涨幅超过3个点，
+        if dataArr[pre_move]['pct_chg'] < 3:
+            continue
+
+        # 剔除最近10天涨50个点和跌30个点的股
+        if abs(calChange(dataArr[pre_move+0]['close'], dataArr[pre_move+9]['close'])) > 0.3:
+            continue
+
+        #【2】boll线width<0.15
+        # datas = dataArr[pre_move:pre_move+20]
+        # mb = calMB(datas)
+        # md = calMD(datas, mb)
+        # up = calUP(mb, md)
+        # dn = calDN(mb, md)
+        # width = calWIDTH(up, dn, mb)
+        # if width > 0.25:
+        #     continue
+
+        #【3】最近10天，低于boll中轨线天数少于3天，收盘价是最近前10天最高
+        low_boll_num = 0
+        for i in range(pre_move,10+pre_move):
+            if dataArr[pre_move]['close'] < (dataArr[i]['close']):
+                isContinue = True
+                break
+            
+            middleBollPrice = calMB(dataArr[i:i+20])
+            if dataArr[i]['close'] < middleBollPrice:
                 low_boll_num += 1
                 if low_boll_num > 3:
                     isContinue = True
@@ -3978,13 +4106,18 @@ if __name__ == "__main__":
 
     # 20日支撑线
     # getZCXStoke()
+    
     # boll线策略，低位放量大涨策略
     # boll_low_rich(30, 0)
+    # boll_low_rich_newPrice(30, 0)
+
+
     # 放巨量上涨，之后会有新高
-    for i in range(3):
-        bigVolBigZ(i)
-        bigVolBigZ_New(i)
-        
+    # for i in range(3):
+        # bigVolBigZ(8)
+    #     bigVolBigZ_New(i)
+    bigVolBigZ(8)
+
     # getTodayZTPreNot(30)
 
     # 缩量跌

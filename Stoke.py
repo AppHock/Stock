@@ -97,6 +97,23 @@ def getCodeInfo():
                 industyWithCode[code] = codeInfo
     return industyWithCode
 
+# 读取本地所有股票名称和股票代码
+def getCodeAndCodeName():
+    saveDir = pathToSys(globalPath + 'StokeInfo/')
+    if not os.path.exists(saveDir):
+        os.makedirs(saveDir)
+    path = pathToSys(saveDir + "行业信息.csv")
+    codeAndCodeName = {}
+    with codecs.open(path, 'r', encoding='utf8') as fp:
+        fp_key = csv.reader(fp)
+        
+        for csv_key in fp_key:
+            csv_reader = csv.DictReader(fp, fieldnames=csv_key)
+            for row in csv_reader:
+                code = row['代码']
+                codeAndCodeName[code] = row['名称']
+    return codeAndCodeName
+
 # 获得前一天的时间
 def getPreDateAndUnixTime(dateUnixTime):
     currentUnixTime = dateUnixTime - 60 * 60 * 24 * 1
@@ -536,12 +553,11 @@ if __name__ == "__main__":
     # getRecentWeekData(4, 0)
 
     # 每天都可以跑一次，把最新的日K数据拉取到本地
-    # addNewData()
-    # 每次开始做回归测试时，需要先本地数据全部读取到内存中，以便其他进场获取数据
-    # getLocalData()
-
+    addNewData()
     # 从网络获取最近600天的数据保存在本地
-    getAllStokeData(100)
+    # getAllStokeData(100)
+    
+    # 每次开始做回归测试时，需要先本地数据全部读取到内存中，以便其他进场获取数据
     getLocalData()
     print('文件保存路径:%s' % globalPath)
     # getLowPriceMainMoney_3()
