@@ -2436,13 +2436,13 @@ def bigVolBigZ_New(pre_move = 0):
 
     allCodes = list(allStokeDate.keys())
 
-    rate = 0.3
+    rate = 0.25
 
     limitUpCodes1 = []
     limitUpCodes2 = []
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if '000718' in code:
+        if '002762' in code:
             print('')
         # 剔除非创业板股票
         if (code[0:3] == '688') :
@@ -2467,33 +2467,30 @@ def bigVolBigZ_New(pre_move = 0):
         if ztNum >= 3:
             continue
 
-        if ((dataArr[pre_move]['pct_chg'] > 9.7) & (dataArr[pre_move+1]['pct_chg'] > 9.7)):
-            # print(codeName)
-            continue
-
         # 当日涨幅低于3个点，超过15个点的剔除
         todayPct_chg = dataArr[0+pre_move]['pct_chg']
         if (todayPct_chg < 3) | (todayPct_chg > 15):
             continue
 
         # 当日成交量比最近10天都高
-        vol_10 = True
+        isContinue = False
         for data in dataArr[1+pre_move:10+pre_move]:
             if data['vol'] > dataArr[pre_move]['vol']:
-                vol_10 = False
+                isContinue = True
                 break
-        if vol_10 == False:
+        if isContinue:
             continue
 
-        # 剔除最近一个月已经涨了30个点的票
+        # 剔除最近一个月已经涨了60个点的票
         change = (dataArr[pre_move]['close'] / dataArr[25+pre_move]['close'])
         if change > (rate+1):
-            if change > 1+rate*2:
+            if change > 1+0.6:
                 continue
             limitUpCodes2.append(codeName)
             continue
-        isContinue = False
 
+        # 当日收盘价10天最高
+        isContinue = False
         for data in dataArr[pre_move+1:pre_move+10]:
             if (dataArr[pre_move]['close'] < data['close']):
                 isContinue = True
@@ -2510,15 +2507,12 @@ def bigVolBigZ_New(pre_move = 0):
         pre_move_real_income(pre_move, limitUpCodes2)
         print('当前日期%s' % dataArr[pre_move]['trade_date'])
         return
-    for codeName in limitUpCodes1:
-        print(codeName)
     
-    if pre_move:
-        pre_move_real_income(pre_move, limitUpCodes2)
-        return
-    print('目前处于即将大幅上涨')
     for codeName in limitUpCodes2:
         print(codeName)
+    # print('目前处于即将大幅上涨')
+    # for codeName in limitUpCodes1:
+    #     print(codeName)
 
     
 
@@ -4137,9 +4131,9 @@ if __name__ == "__main__":
         # bigVolBigZ_New(i)
     # bigVolBigZ(8)
 
-    bigVolBigZ_New(2)
-    # for i in range(20):
-        # bigVolBigZ_New(i)
+    # bigVolBigZ_New(16)
+    for i in range(20):
+        bigVolBigZ_New(i)
         
     # getTodayZTPreNot(30)
 
