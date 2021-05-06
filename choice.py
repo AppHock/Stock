@@ -3730,18 +3730,21 @@ def weekStrategy(num, pre_move):
     for name in limitUpCodes_5:
         print(name)
 
-# 逻辑：找多少天内股价创新高的股票
-def getNewHighPrice(num):
-    pre_move = 0
+# 逻辑：找多少天内股价创新高的股票，历史新高
+def getNewHighPrice(num, pre_move = 0):
     dayNum = num+pre_move
     allStokeDate = getLocalKLineData(dayNum)
     industryAndCode =  Stoke.getCodeInfo()
     limitUpCodes_5 = []
+    limitUpCodes = []
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if ('688' in code) | ('300' in code):
+        if ('688' in code):
             continue
+
+        if '600035' in code:
+            print('')
 
         dataArr = allStokeDate[code]
         if len(dataArr) < dayNum:
@@ -3752,9 +3755,19 @@ def getNewHighPrice(num):
         if 'ST' in codeName:
             continue
 
-        # 收盘价目前最高
+        # 收盘价目前最高, 剔除最近10天，4个涨停的
         isContinue = False
+        reDay = 0
+        ztDay = 0
         for data in dataArr[pre_move+1:dayNum]:
+            reDay += 1
+            if reDay <= 11:
+                if (data['pct_chg'] >= 9.7):
+                    ztDay += 1
+                    if (ztDay >= 4):
+                        isContinue = True
+                        break
+                                        
             if dataArr[pre_move]['close'] < data['close']:
                 isContinue = True
                 break
@@ -3762,10 +3775,11 @@ def getNewHighPrice(num):
             continue
         
         limitUpCodes_5.append(codeName)
-        
+        limitUpCodes.append(code)
     print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodes_5)))
     for name in limitUpCodes_5:
         print(name)
+    stokeArrayToString(limitUpCodes)
 
 # 逻辑：boll线策略，低位放量大涨策略
 '''
@@ -4162,7 +4176,7 @@ if __name__ == "__main__":
 
     # follow_n_day_Line(20, 10)
     # lianxu_week_z(3, 5)
-    # getNewHighPrice(90)
+    getNewHighPrice(100, 0)
     
     # 最强周线策略
     # weekStrategy(3, 0)
@@ -4173,7 +4187,7 @@ if __name__ == "__main__":
     # boll线策略，低位放量大涨策略
     # boll_low_rich(30, 0)
     # boll_low_rich_newPrice(30, 0)
-
+    
 
     # 放巨量上涨，之后会有新高
     # for i in range(3):
@@ -4182,15 +4196,14 @@ if __name__ == "__main__":
     # bigVolBigZ(8)
 
     # bigVolBigZ_New(16)
-    # for i in range(20):
-
+    # for i in range(5):
     #     bigVolBigZ_New(i, 0)
         
     # 昨日涨停
-    getYesterDayLimint()
+    # getYesterDayLimint()
 
     # 缩量跌
-    stopDBeginZ(0)
+    # stopDBeginZ(0)
 
     # 连续涨停策略
     # for i in range(5):
