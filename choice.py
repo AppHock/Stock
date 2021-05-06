@@ -233,7 +233,7 @@ def marketCapAboveBillion(codes):
     return needCodes
 
 # 逻辑：通过偏移日期，找出改股的收益
-def pre_move_real_income(pre_move=0, codes=[], codeNames=[]):
+def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
     if pre_move == 0:
         return
     
@@ -265,7 +265,11 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[]):
         dataArr = allStokeDate[code]
         if len(dataArr) < pre_move:
             continue
-        change = calChange(dataArr[-1]['close'], dataArr[0]['close'])
+        if (sellDay > 0) & ((pre_move-sellDay) > 0):
+            sDay = pre_move-sellDay
+        else:
+            sDay = 0
+        change = calChange(dataArr[-1]['close'], dataArr[sDay]['close'])
         if change < -0.4:
             print('【%s】可能最近除权了，所以导致算出来的亏损特别严重' % codeName)
         limitUpCodes.append([codeName, change])
@@ -2424,7 +2428,7 @@ def bigVolBigZ(pre_move = 0):
 1、当天收盘价在最近10天最高，今天成交量比最近10天都高
 2、当日成交量比最近10天都高，当天涨幅>3，最近60天内收盘价比当天高的要少于20天，低于当天收盘价的要超过35天，而且最近30天最高收盘价 < 当天收盘价*1.38
 '''
-def bigVolBigZ_New(pre_move = 0):
+def bigVolBigZ_New(pre_move = 0, sellDay = 0):
     # 向前偏移天数，方便测试
     dayNum = 60+pre_move
     global global_All_StokeData, g_industryAndCode
@@ -2481,6 +2485,10 @@ def bigVolBigZ_New(pre_move = 0):
         if isContinue:
             continue
 
+        # 剔除连续两天涨停的
+        if ((dataArr[pre_move]['pct_chg'] > 9.7) & (dataArr[pre_move+1]['pct_chg'] > 9.7)):
+            continue
+
         # 剔除最近一个月已经涨了60个点的票
         change = (dataArr[pre_move]['close'] / dataArr[25+pre_move]['close'])
         if change > (rate+1):
@@ -2504,7 +2512,7 @@ def bigVolBigZ_New(pre_move = 0):
         # print('最近10天，当天收盘价和成交量都是最高')
         # pre_move_real_income(pre_move, limitUpCodes1)
         print('最近一个月涨幅超过%d个点，放量涨的股' % (rate*100))
-        pre_move_real_income(pre_move, limitUpCodes2)
+        pre_move_real_income(pre_move, limitUpCodes2, [], sellDay)
         print('当前日期%s' % dataArr[pre_move]['trade_date'])
         return
     
@@ -2580,7 +2588,7 @@ def getMoneyWithMACD():
 def stopDBeginZ(pre_move = 0):
     dayNum = 10+pre_move
     allStokeDate = getLocalKLineData(dayNum)
-    industryAndCode =  Stoke.getCodeInfo()
+    industryAndCode =  g_industryAndCode
     limitUpCodeName = []
     limitUpCodes = [] 
     allCodes = list(allStokeDate.keys())
@@ -2607,10 +2615,17 @@ def stopDBeginZ(pre_move = 0):
         if ('ST' in codeName) | ('' == codeName):
             continue
         
-        if (dataArr[pre_move]['vol'] < dataArr[pre_move+1]['vol']) & (dataArr[pre_move+1]['vol'] < dataArr[pre_move+2]['vol']):
-            if (dataArr[pre_move]['pct_chg'] < 0) & (dataArr[pre_move+1]['pct_chg'] < 0) & (dataArr[pre_move+2]['pct_chg'] < 0):
-                limitUpCodes.append(code)
-                limitUpCodeName.append(codeName)
+        # 当天跌幅
+        # 跌的多，今天成交量<昨天成交量
+        if (dataArr[pre_move]['pct_chg'] < -7) & (dataArr[pre_move]['vol'] < dataArr[pre_move+1]['vol']):
+            limitUpCodes.append(code)
+            limitUpCodeName.append(codeName)
+            continue
+        
+        # 跌的少，今天成交量<昨天成交量*0.8
+        if (dataArr[pre_move]['pct_chg'] < -4) & (dataArr[pre_move]['vol'] < dataArr[pre_move+1]['vol']*0.8):
+            limitUpCodes.append(code)
+            limitUpCodeName.append(codeName)
     print('==============连续三天缩量跌===============')
     for code in limitUpCodeName:
         print(code)
@@ -4132,13 +4147,13 @@ if __name__ == "__main__":
     # bigVolBigZ(8)
 
     # bigVolBigZ_New(16)
-    for i in range(20):
-        bigVolBigZ_New(i)
+    # for i in range(20):
+    #     bigVolBigZ_New(i, 0)
         
     # getTodayZTPreNot(30)
 
     # 缩量跌
-    # stopDBeginZ(0)
+    stopDBeginZ(0)
 
     # 连续涨停策略
     # for i in range(5):
