@@ -74,7 +74,6 @@ def getRecentlimitup(dayNum):
         if isNeedDelCode(code):
             continue
         if len(allStokeDate[code]) < 30:
-            # print("这是一直新上市的股票%s" % code)
             continue
         dataArr = allStokeDate[code][0:dayNum]
         
@@ -1026,6 +1025,41 @@ def getRecentNoBigVolBidDie(dayNum):
     print('===============以下是：找最近几天没有放量大跌的股，看之后几天的走势===============')
     for code in limitUpCodes:
         print(code)
+
+# 逻辑：昨日涨停
+def getYesterDayLimint():
+    allStokeDate = getLocalKLineData(1)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes = []
+    limitUpCodeNames = []
+    allCodes = list(allStokeDate.keys())
+    codeString = ''
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code) | ('300' in code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if (len(dataArr) != 1):
+            continue
+        
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        if ('ST' in codeName) | ('' == codeName):
+            continue
+        
+        if dataArr[0]['pct_chg'] < 9.7:
+            continue
+        limitUpCodeNames.append(codeName)
+        limitUpCodes.append(code)
+        if (codeString == ''):
+            codeString = code[:6]
+        else:
+            codeString += ' ' + code[:6]
+
+    print('==============昨日涨停: %d ===============' % len(limitUpCodes))
+    for name in limitUpCodeNames:
+        print(name)
+    stokeArrayToString(limitUpCodes)
 
 # 逻辑：找到最近两天涨停，第三天大跌的股票
 def recentTwoDayZOneD(dayNum):
@@ -4136,8 +4170,8 @@ if __name__ == "__main__":
     # for i in range(20):
     #     bigVolBigZ_New(i)
         
-    # 最近一天涨停
-    getRecentlimitup(1)
+    # 昨日涨停
+    getYesterDayLimint()
 
     # 缩量跌
     # stopDBeginZ(0)
