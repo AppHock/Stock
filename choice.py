@@ -66,6 +66,7 @@ def getRecentlimitup(dayNum):
     # 记录连续dayNum涨停的股票
     allStokeDate = getLocalKLineData(30)
     limitUpCodes = []
+    limitUpCodeNames = []
     allCodes = list(allStokeDate.keys())
     industryAndCode = Stoke.getCodeInfo()
     for i in range(len(allCodes)):
@@ -73,7 +74,6 @@ def getRecentlimitup(dayNum):
         if isNeedDelCode(code):
             continue
         if len(allStokeDate[code]) < 30:
-            # print("这是一直新上市的股票%s" % code)
             continue
         dataArr = allStokeDate[code][0:dayNum]
         
@@ -85,10 +85,12 @@ def getRecentlimitup(dayNum):
             if chg < 9.9:
                 break
             if j == len(dataArr) - 1:
-                limitUpCodes.append(industryAndCode[code]['name'])
-    print('===============最近连续%d天涨停的股票===============' % dayNum)
-    for code in limitUpCodes:
-        print(code)
+                limitUpCodeNames.append(industryAndCode[code]['name'])
+                limitUpCodes.append(code)
+    print('===============最近连续%d天涨停的股票：%d个===============' % (dayNum, len(limitUpCodes)))
+    for codeName in limitUpCodeNames:
+        print(codeName)
+    stokeArrayToString(limitUpCodes)
 '''
 【1】今天封板涨停
 '''
@@ -274,17 +276,17 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
             print('【%s】可能最近除权了，所以导致算出来的亏损特别严重' % codeName)
         limitUpCodes.append([codeName, change])
     print('偏移%d天之后的，收益情况一栏表' % pre_move)
-    makeMoneyNum = 0
+    lossMoneyNum = 0
     for dataInfo in limitUpCodes:
         change = dataInfo[1]
-        if change > 0:
-            str = '赚'
-            makeMoneyNum += 1
-        else:
+        if change < 0:
             str = '亏'
+            lossMoneyNum += 1
+        else:
+            str = '赚'
         print('【%s】收益：%s%d个点' % (dataInfo[0].ljust(4), str, int(change*100)))
-    makeMoneyRate = int((makeMoneyNum/len(limitUpCodes))*100)
-    print("策略收益情况，赚钱比例:%d%%, 亏钱比例:%d%%\n" % (makeMoneyRate, 100-makeMoneyRate))
+    lostMoneyRate = int((lossMoneyNum/len(limitUpCodes))*100)
+    print("策略收益情况，赚钱比例:%d%%, 亏钱比例:%d%%\n" % (100-lostMoneyRate, lostMoneyRate))
 
     
 
@@ -1027,6 +1029,41 @@ def getRecentNoBigVolBidDie(dayNum):
     print('===============以下是：找最近几天没有放量大跌的股，看之后几天的走势===============')
     for code in limitUpCodes:
         print(code)
+
+# 逻辑：昨日涨停
+def getYesterDayLimint():
+    allStokeDate = getLocalKLineData(1)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes = []
+    limitUpCodeNames = []
+    allCodes = list(allStokeDate.keys())
+    codeString = ''
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code) | ('300' in code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if (len(dataArr) != 1):
+            continue
+        
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        if ('ST' in codeName) | ('' == codeName):
+            continue
+        
+        if dataArr[0]['pct_chg'] < 9.7:
+            continue
+        limitUpCodeNames.append(codeName)
+        limitUpCodes.append(code)
+        if (codeString == ''):
+            codeString = code[:6]
+        else:
+            codeString += ' ' + code[:6]
+
+    print('==============昨日涨停: %d ===============' % len(limitUpCodes))
+    for name in limitUpCodeNames:
+        print(name)
+    stokeArrayToString(limitUpCodes)
 
 # 逻辑：找到最近两天涨停，第三天大跌的股票
 def recentTwoDayZOneD(dayNum):
@@ -2440,13 +2477,13 @@ def bigVolBigZ_New(pre_move = 0, sellDay = 0):
 
     allCodes = list(allStokeDate.keys())
 
-    rate = 0.25
+    rate = 0.22
 
     limitUpCodes1 = []
     limitUpCodes2 = []
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if '002762' in code:
+        if '601666' in code:
             print('')
         # 剔除非创业板股票
         if (code[0:3] == '688') :
@@ -2461,14 +2498,8 @@ def bigVolBigZ_New(pre_move = 0, sellDay = 0):
         if len(dataArr) < 60:
             continue
 
-        # 剔除最近5天，3天涨停的票
-        ztNum = 0
-        for data in dataArr[pre_move:pre_move+5]:
-            if data['pct_chg'] > 9.7:
-                ztNum += 1
-            if ztNum >= 3:
-                break
-        if ztNum >= 3:
+        # 剔除最近2天涨停的票
+        if (dataArr[pre_move]['pct_chg'] > 9.7) & (dataArr[pre_move+1]['pct_chg'] > 9.7):
             continue
 
         # 当日涨幅低于3个点，超过15个点的剔除
@@ -2476,10 +2507,14 @@ def bigVolBigZ_New(pre_move = 0, sellDay = 0):
         if (todayPct_chg < 3) | (todayPct_chg > 15):
             continue
 
-        # 当日成交量比最近10天都高
+        # 当日成交量，收盘价比最近10天都高
         isContinue = False
         for data in dataArr[1+pre_move:10+pre_move]:
             if data['vol'] > dataArr[pre_move]['vol']:
+                isContinue = True
+                break
+        
+            if (dataArr[pre_move]['close'] < data['close']):
                 isContinue = True
                 break
         if isContinue:
@@ -4148,9 +4183,11 @@ if __name__ == "__main__":
 
     # bigVolBigZ_New(16)
     # for i in range(20):
+
     #     bigVolBigZ_New(i, 0)
         
-    # getTodayZTPreNot(30)
+    # 昨日涨停
+    getYesterDayLimint()
 
     # 缩量跌
     stopDBeginZ(0)
