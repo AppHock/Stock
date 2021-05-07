@@ -48,6 +48,8 @@ globalDataPath = pathToSys(globalPath + 'test.dat')
 global_All_StokeData = {}
 global_IndustryAndCode = {}
 g_industryAndCode = Stoke.getCodeInfo()
+g_allStokeDate_100 = Stoke.getLocalKLineData(100)
+g_codeAndcodeName =  Stoke.getCodeAndCodeName()
 
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
@@ -236,6 +238,7 @@ def marketCapAboveBillion(codes):
 
 # 逻辑：通过偏移日期，找出改股的收益
 def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
+    global g_codeAndcodeName
     if pre_move == 0:
         return
     
@@ -243,7 +246,7 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
         return
     
     allStokeDate = getLocalKLineData(pre_move+1)
-    codeAndcodeName =  Stoke.getCodeAndCodeName()
+    codeAndcodeName =  g_codeAndcodeName
     codeNameAndCode = {v:k for k,v in codeAndcodeName.items()}
     limitUpCodes = []
 
@@ -3731,11 +3734,12 @@ def weekStrategy(num, pre_move):
         print(name)
 
 # 逻辑：找多少天内股价创新高的股票，历史新高
-def getNewHighPrice(num, pre_move = 0):
-    dayNum = num+pre_move
-    allStokeDate = getLocalKLineData(dayNum)
-    industryAndCode =  Stoke.getCodeInfo()
-    limitUpCodes_5 = []
+def getNewHighPrice(num, pre_move = 0, sellDay = 0):
+    global g_allStokeDate_100, g_industryAndCode
+    dayNum = num
+    allStokeDate = g_allStokeDate_100
+    industryAndCode =  g_industryAndCode
+    limitUpCodeNames = []
     limitUpCodes = []
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
@@ -3753,6 +3757,10 @@ def getNewHighPrice(num, pre_move = 0):
         codeName = industryAndCode.get(code, {}).get('name', '')
         # 剔除ST类股票
         if 'ST' in codeName:
+            continue
+
+        # 剔除最近两天涨停的
+        if (dataArr[pre_move]['pct_chg'] > 9.7) & (dataArr[pre_move+1]['pct_chg'] > 9.7):
             continue
 
         # 收盘价目前最高, 剔除最近10天，4个涨停的
@@ -3774,12 +3782,17 @@ def getNewHighPrice(num, pre_move = 0):
         if isContinue:
             continue
         
-        limitUpCodes_5.append(codeName)
+        limitUpCodeNames.append(codeName)
         limitUpCodes.append(code)
-    print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodes_5)))
-    for name in limitUpCodes_5:
+    print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodeNames)))
+    if pre_move:
+        pre_move_real_income(pre_move, limitUpCodes, [], sellDay)
+        return
+    for name in limitUpCodeNames:
         print(name)
+
     stokeArrayToString(limitUpCodes)
+    
 
 # 逻辑：boll线策略，低位放量大涨策略
 '''
@@ -4176,7 +4189,6 @@ if __name__ == "__main__":
 
     # follow_n_day_Line(20, 10)
     # lianxu_week_z(3, 5)
-    getNewHighPrice(100, 0)
     
     # 最强周线策略
     # weekStrategy(3, 0)
@@ -4201,6 +4213,10 @@ if __name__ == "__main__":
         
     # 昨日涨停
     # getYesterDayLimint()
+    
+    # 创新高
+    for i in range(20):
+        getNewHighPrice(100, i, 0)
 
     # 缩量跌
     # stopDBeginZ(0)
