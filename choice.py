@@ -3750,7 +3750,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if ('688' in code):
             continue
 
-        if '300453' in code:
+        if '002626' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -3763,11 +3763,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
             continue
 
         # 剔除当天涨幅低于3个点的
-        if (dataArr[pre_move]['pct_chg'] <= 3):
-            continue
-
-        # 剔除最近两天涨停的
-        if (dataArr[pre_move]['pct_chg'] > 9.7) & (dataArr[pre_move+1]['pct_chg'] > 9.7):
+        if (dataArr[pre_move]['pct_chg'] < 3.9) | (dataArr[pre_move]['pct_chg'] > 9.7):
             continue
 
         # 收盘价目前最高, 剔除最近10天，4个涨停的
@@ -4222,8 +4218,10 @@ if __name__ == "__main__":
     # getYesterDayLimint()
     
     # 创新高
-    for i in range(20):
-        getNewHighPrice(100, i, 0)
+    # for i in range(20):
+    #     getNewHighPrice(100, i, 0)
+    
+    getNewHighPrice(100, 0, 0)
 
     # getNewHighPrice(100, 5, 0)
 
