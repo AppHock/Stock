@@ -266,6 +266,8 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
             if code == '':
                 continue
             codeName = obj
+        if '300453' in code:
+            print('')
 
         dataArr = allStokeDate[code]
         if len(dataArr) < pre_move:
@@ -290,6 +292,7 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
         print('【%s】收益：%s%d个点' % (dataInfo[0].ljust(4), str, int(change*100)))
     lostMoneyRate = int((lossMoneyNum/len(limitUpCodes))*100)
     print("策略收益情况，赚钱比例:%d%%, 亏钱比例:%d%%\n" % (100-lostMoneyRate, lostMoneyRate))
+    print('日期：【%s】' % dataArr[pre_move]['trade_date'])
 
     
 
@@ -3747,7 +3750,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if ('688' in code):
             continue
 
-        if '600035' in code:
+        if '300453' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -3757,6 +3760,10 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         codeName = industryAndCode.get(code, {}).get('name', '')
         # 剔除ST类股票
         if 'ST' in codeName:
+            continue
+
+        # 剔除当天涨幅低于3个点的
+        if (dataArr[pre_move]['pct_chg'] <= 3):
             continue
 
         # 剔除最近两天涨停的
@@ -4217,6 +4224,8 @@ if __name__ == "__main__":
     # 创新高
     for i in range(20):
         getNewHighPrice(100, i, 0)
+
+    # getNewHighPrice(100, 5, 0)
 
     # 缩量跌
     # stopDBeginZ(0)
