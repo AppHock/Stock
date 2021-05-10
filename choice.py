@@ -291,8 +291,8 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
             str = '赚'
         print('【%s】收益：%s%d个点' % (dataInfo[0].ljust(4), str, int(change*100)))
     lostMoneyRate = int((lossMoneyNum/len(limitUpCodes))*100)
-    print("策略收益情况，赚钱比例:%d%%, 亏钱比例:%d%%\n" % (100-lostMoneyRate, lostMoneyRate))
     print('日期：【%s】' % dataArr[pre_move]['trade_date'])
+    print("策略收益情况，赚钱比例:%d%%, 亏钱比例:%d%%" % (100-lostMoneyRate, lostMoneyRate))
 
     
 
@@ -3763,7 +3763,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
             continue
 
         # 剔除当天涨幅低于3个点的
-        if (dataArr[pre_move]['pct_chg'] <= 3):
+        if (dataArr[pre_move]['pct_chg'] < 4) | (dataArr[pre_move]['pct_chg'] > 9.7) :
             continue
 
         # 剔除最近两天涨停的
@@ -4222,7 +4222,7 @@ if __name__ == "__main__":
     # getYesterDayLimint()
     
     # 创新高
-    for i in range(20):
+    for i in range(6):
         getNewHighPrice(100, i, 0)
 
     # getNewHighPrice(100, 5, 0)
