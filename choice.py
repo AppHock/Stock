@@ -4219,11 +4219,11 @@ if __name__ == "__main__":
     #     bigVolBigZ_New(i, 0)
         
     # 昨日涨停
-    # getYesterDayLimint()
+    getYesterDayLimint()
     
     # 创新高
-    for i in range(6):
-        getNewHighPrice(100, i, 0)
+    # for i in range(6):
+        # getNewHighPrice(100, i, 0)
 
     # getNewHighPrice(100, 5, 0)
 
