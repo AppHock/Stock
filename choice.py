@@ -48,7 +48,7 @@ globalDataPath = pathToSys(globalPath + 'test.dat')
 global_All_StokeData = {}
 global_IndustryAndCode = {}
 g_industryAndCode = Stoke.getCodeInfo()
-g_allStokeDate_100 = Stoke.getLocalKLineData(100)
+g_allStokeDate_60 = Stoke.getLocalKLineData(60)
 g_codeAndcodeName =  Stoke.getCodeAndCodeName()
 
 
@@ -3738,9 +3738,9 @@ def weekStrategy(num, pre_move):
 
 # 逻辑：找多少天内股价创新高的股票，历史新高
 def getNewHighPrice(num, pre_move = 0, sellDay = 0):
-    global g_allStokeDate_100, g_industryAndCode
+    global g_allStokeDate_60, g_industryAndCode
     dayNum = num
-    allStokeDate = g_allStokeDate_100
+    allStokeDate = g_allStokeDate_60
     industryAndCode =  g_industryAndCode
     limitUpCodeNames = []
     limitUpCodes = []
@@ -3763,10 +3763,10 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
             continue
 
         # 剔除当天涨幅低于6个点的
-        if (dataArr[pre_move]['pct_chg'] < 6):
+        if (dataArr[pre_move]['pct_chg'] < 4):
             continue
 
-        # 收盘价目前最高, 剔除最近10天，6个涨停的
+        # 收盘价目前最高, 剔除最近10天，涨停次数超过6次，低于2次
         isContinue = False
         reDay = 0
         # 涨停天数
@@ -3779,6 +3779,10 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
                     if (ztDay >= 6):
                         isContinue = True
                         break
+            else:
+                if ztDay < 2:
+                    isContinue = True
+                    break
                                         
             if dataArr[pre_move]['close'] < data['close']:
                 isContinue = True
@@ -4216,26 +4220,23 @@ if __name__ == "__main__":
     #     bigVolBigZ_New(i, 0)
         
     # 昨日涨停
-    getYesterDayLimint()
+    # getYesterDayLimint()
     
     # 创新高
-
     # for i in range(6):
         # getNewHighPrice(100, i, 0)
 
-    # for i in range(20):
-    #     getNewHighPrice(100, i, 0)
+    for i in range(20):
+        getNewHighPrice(60, i, 0)
     
-    getNewHighPrice(100, 0, 0)
+    # getNewHighPrice(100, 0, 0)
 
-    # getNewHighPrice(100, 5, 0)
+    # getNewHighPrice(60, 5, 0)
 
     # 缩量跌
     # stopDBeginZ(0)
 
     # 连续涨停策略
-    # for i in range(5):
-    #     findZTStoke(i+1)
     # for i in range(5):
     #     findZTStoke(i+1)
     
