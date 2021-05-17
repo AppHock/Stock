@@ -3750,7 +3750,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if ('688' in code):
             continue
 
-        if '002626' in code:
+        if '300598' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -3780,7 +3780,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
                         isContinue = True
                         break
             else:
-                if ztDay < 2:
+                if ztDay < 1:
                     isContinue = True
                     break
                                         
@@ -4226,12 +4226,10 @@ if __name__ == "__main__":
     # for i in range(6):
         # getNewHighPrice(100, i, 0)
 
-    for i in range(20):
-        getNewHighPrice(60, i, 0)
-    
-    # getNewHighPrice(100, 0, 0)
+    # for i in range(20):
+    #     getNewHighPrice(60, i, 0)
 
-    # getNewHighPrice(60, 5, 0)
+    getNewHighPrice(60, 0, 0)
 
     # 缩量跌
     # stopDBeginZ(0)
