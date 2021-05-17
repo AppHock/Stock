@@ -48,7 +48,7 @@ globalDataPath = pathToSys(globalPath + 'test.dat')
 global_All_StokeData = {}
 global_IndustryAndCode = {}
 g_industryAndCode = Stoke.getCodeInfo()
-g_allStokeDate_100 = Stoke.getLocalKLineData(100)
+g_allStokeDate_60 = Stoke.getLocalKLineData(60)
 g_codeAndcodeName =  Stoke.getCodeAndCodeName()
 
 
@@ -291,8 +291,8 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
             str = '赚'
         print('【%s】收益：%s%d个点' % (dataInfo[0].ljust(4), str, int(change*100)))
     lostMoneyRate = int((lossMoneyNum/len(limitUpCodes))*100)
-    print("策略收益情况，赚钱比例:%d%%, 亏钱比例:%d%%\n" % (100-lostMoneyRate, lostMoneyRate))
     print('日期：【%s】' % dataArr[pre_move]['trade_date'])
+    print("策略收益情况，赚钱比例:%d%%, 亏钱比例:%d%%" % (100-lostMoneyRate, lostMoneyRate))
 
     
 
@@ -3738,9 +3738,9 @@ def weekStrategy(num, pre_move):
 
 # 逻辑：找多少天内股价创新高的股票，历史新高
 def getNewHighPrice(num, pre_move = 0, sellDay = 0):
-    global g_allStokeDate_100, g_industryAndCode
+    global g_allStokeDate_60, g_industryAndCode
     dayNum = num
-    allStokeDate = g_allStokeDate_100
+    allStokeDate = g_allStokeDate_60
     industryAndCode =  g_industryAndCode
     limitUpCodeNames = []
     limitUpCodes = []
@@ -3750,7 +3750,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if '300' not in code:
             continue
 
-        if '002626' in code:
+        if '300598' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -3762,22 +3762,27 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if 'ST' in codeName:
             continue
 
-        # 剔除当天涨幅低于3个点的
-        if (dataArr[pre_move]['pct_chg'] < 3.9) | (dataArr[pre_move]['pct_chg'] > 9.7):
+        # 剔除当天涨幅低于6个点的
+        if (dataArr[pre_move]['pct_chg'] < 4):
             continue
 
-        # 收盘价目前最高, 剔除最近10天，4个涨停的
+        # 收盘价目前最高, 剔除最近10天，涨停次数超过6次，低于2次
         isContinue = False
         reDay = 0
+        # 涨停天数
         ztDay = 0
         for data in dataArr[pre_move+1:dayNum]:
             reDay += 1
             if reDay <= 11:
                 if (data['pct_chg'] >= 9.7):
                     ztDay += 1
-                    if (ztDay >= 4):
+                    if (ztDay >= 6):
                         isContinue = True
                         break
+            else:
+                if ztDay < 1:
+                    isContinue = True
+                    break
                                         
             if dataArr[pre_move]['close'] < data['close']:
                 isContinue = True
@@ -4218,19 +4223,18 @@ if __name__ == "__main__":
     getYesterDayLimint()
     
     # 创新高
-    # for i in range(20):
-    #     getNewHighPrice(100, i, 0)
-    
-    getNewHighPrice(100, 0, 0)
+    # for i in range(6):
+        # getNewHighPrice(100, i, 0)
 
-    # getNewHighPrice(100, 5, 0)
+    # for i in range(20):
+    #     getNewHighPrice(60, i, 0)
+
+    getNewHighPrice(60, 0, 0)
 
     # 缩量跌
     # stopDBeginZ(0)
 
     # 连续涨停策略
-    # for i in range(5):
-    #     findZTStoke(i+1)
     # for i in range(5):
     #     findZTStoke(i+1)
     
