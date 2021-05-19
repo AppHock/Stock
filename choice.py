@@ -4200,9 +4200,6 @@ if __name__ == "__main__":
     
     # 最强周线策略
     # weekStrategy(3, 0)
-
-    # 20日支撑线
-    # getZCXStoke()
     
     # boll线策略，低位放量大涨策略
     # boll_low_rich(30, 0)
@@ -4230,6 +4227,9 @@ if __name__ == "__main__":
     #     getNewHighPrice(60, i, 0)
 
     getNewHighPrice(60, 0, 0)
+
+    # 20日支撑线
+    getZCXStoke()
 
     # 缩量跌
     # stopDBeginZ(0)
