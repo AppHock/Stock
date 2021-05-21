@@ -1094,6 +1094,36 @@ def recentTwoDayZOneD(dayNum):
     print('===============以下是：找到最近两天涨停，第三天大跌的股票===============')
     for code in limitUpCodes:
         print(code)
+    
+# 逻辑：找到最近5天创业板涨停的股票
+def recentFiveDayCYBZ(dayNum = 5):
+    allStokeDate = getLocalKLineData(dayNum)
+    # 从数据中找到第一个比后面的数据的平均值高3倍
+    limitUpCodes = []
+    allCodes = list(allStokeDate.keys())
+
+    # 涨，涨，跌
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if (code[0:3] != '300'):
+            continue
+        dataArr = allStokeDate[code]
+
+        if len(dataArr) < dayNum:
+            continue
+        
+        isContinue = True
+        for data in dataArr:
+            if (data['pct_chg'] > 19):
+                isContinue = False
+                break
+        if isContinue:
+            continue
+        limitUpCodes.append(code)
+    print('===============以下是：找到最近两天涨停，第三天大跌的股票===============')
+    for code in limitUpCodes:
+        print(code)
+    stokeArrayToString(limitUpCodes)
 
 # 逻辑：第一天涨幅超过2个点，第二天大跌5个点以上，第二天交易量比第一天还低
 def zDVollow(dayNum):
@@ -4215,9 +4245,6 @@ if __name__ == "__main__":
     # bigVolBigZ_New(16)
     # for i in range(5):
     #     bigVolBigZ_New(i, 0)
-        
-    # 昨日涨停
-    # getYesterDayLimint()
     
     # 创新高
     # for i in range(6):
@@ -4226,10 +4253,16 @@ if __name__ == "__main__":
     # for i in range(20):
     #     getNewHighPrice(60, i, 0)
 
-    getNewHighPrice(60, 0, 0)
+    # 最近5天创业板涨停过的股票
+    recentFiveDayCYBZ()
+
+    # getNewHighPrice(60, 0, 0)
+
+    # 昨日涨停
+    # getYesterDayLimint()
 
     # 20日支撑线
-    getZCXStoke()
+    # getZCXStoke()
 
     # 缩量跌
     # stopDBeginZ(0)
