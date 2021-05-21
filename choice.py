@@ -3777,7 +3777,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if ('688' in code):
+        if '300' not in code:
             continue
 
         if '300598' in code:
@@ -4245,6 +4245,12 @@ if __name__ == "__main__":
     # bigVolBigZ_New(16)
     # for i in range(5):
     #     bigVolBigZ_New(i, 0)
+<<<<<<< HEAD
+=======
+        
+    # 昨日涨停
+    getYesterDayLimint()
+>>>>>>> d249929bfbcfd781931fa3a1d56418e8c17bd994
     
     # 创新高
     # for i in range(6):
