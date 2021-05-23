@@ -3747,10 +3747,10 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if '300' not in code:
+        if '688' in code:
             continue
 
-        if '300598' in code:
+        if '002667' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -4229,7 +4229,7 @@ if __name__ == "__main__":
     # for i in range(20):
     #     getNewHighPrice(60, i, 0)
 
-    getNewHighPrice(60, 0, 0)
+    getNewHighPrice(60, 1, 0)
 
     # 缩量跌
     # stopDBeginZ(0)
