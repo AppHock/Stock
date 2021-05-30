@@ -266,7 +266,7 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
             if code == '':
                 continue
             codeName = obj
-        if '300453' in code:
+        if '300453 w' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -3713,7 +3713,7 @@ def lianxu_week_z(num, kLine):
     for name in limitUpCodes_5:
         print(name)
 
-# 逻辑：周线策略，目前最强
+# 逻辑：周线策略，目前最强，
 def weekStrategy(num, pre_move):
     allStokeDate = Stoke.getRecentWeekData(num+1, pre_move)
     industryAndCode =  Stoke.getCodeInfo()
@@ -3722,7 +3722,7 @@ def weekStrategy(num, pre_move):
     tradeData = ''
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if ('688' in code) | ('300' in code):
+        if ('688' in code):
             continue
 
         dataArr = allStokeDate[code]
@@ -3763,6 +3763,42 @@ def weekStrategy(num, pre_move):
         limitUpCodes_5.append(codeName)
         
     print('==============连续%d个，周线上涨，最新一周(%s)涨幅超过5个点: %d只股 ===============' % (num, tradeData, len(limitUpCodes_5)))
+    for name in limitUpCodes_5:
+        print(name)
+
+# 逻辑：周线策略，本周涨幅超过20个点
+def currentWeekStrategy(pre_move=0):
+    allStokeDate = Stoke.getRecentWeekData(1, pre_move)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes_5 = []
+    limitUpCodeNames = []
+    allCodes = list(allStokeDate.keys())
+    tradeData = ''
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if ('688' in code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < 1:
+            continue
+
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        # 剔除ST类股票
+        if ('ST' in codeName) | (len(codeName) == 0):
+            continue
+
+        if '中源协和' in codeName:
+            print('')
+
+        # 本周涨幅超过20个点
+        if dataArr[0]['pct_chg'] < 20:
+            continue
+
+        limitUpCodes_5.append(codeName)
+        limitUpCodeNames.append(code)
+        
+    print('==============本周涨幅超过20个点的股: %d只股 ===============' % len(limitUpCodes_5))
     for name in limitUpCodes_5:
         print(name)
 
@@ -4230,6 +4266,10 @@ if __name__ == "__main__":
     
     # 最强周线策略
     # weekStrategy(3, 0)
+    # 本周涨幅超过20个点
+    for i in range(5):
+        currentWeekStrategy(i)
+
     
     # boll线策略，低位放量大涨策略
     # boll_low_rich(30, 0)
@@ -4247,7 +4287,7 @@ if __name__ == "__main__":
     #     bigVolBigZ_New(i, 0)
         
     # 昨日涨停
-    getYesterDayLimint()
+    # getYesterDayLimint()
     
     # 创新高
     # for i in range(6):
@@ -4256,10 +4296,10 @@ if __name__ == "__main__":
     # for i in range(20):
     #     getNewHighPrice(60, i, 0)
 
-    getNewHighPrice(60, 1, 0)
+    # getNewHighPrice(60, 1, 0)
 
     # 最近5天创业板涨停过的股票
-    recentFiveDayCYBZ()
+    # recentFiveDayCYBZ()
 
     # getNewHighPrice(60, 0, 0)
 
@@ -4279,3 +4319,5 @@ if __name__ == "__main__":
     # getDoubleStoke_strong()
     # adjust_ZD_stoke()
     # getNewPoBan()
+
+# 600321 600844 002617 600281 600055 603690 
