@@ -30,7 +30,6 @@ token = 'ed854a25065df86d7d0dddf9161abc26e7eff21ccd2ba4d0d3d3e28c'
 tu.set_token(token)
 pro = tu.pro_api()
 globalSys_Mac = platform.system().lower() == 'darwin'
-print('当前操作系统:%s' % platform.system().lower())
 
 # 逻辑：路径转换
 def pathToSys(path):
@@ -3770,7 +3769,7 @@ def weekStrategy(num, pre_move):
 def currentWeekStrategy(pre_move=0):
     allStokeDate = Stoke.getRecentWeekData(1, pre_move)
     industryAndCode =  Stoke.getCodeInfo()
-    limitUpCodes_5 = []
+    limitUpCodes = []
     limitUpCodeNames = []
     allCodes = list(allStokeDate.keys())
     tradeData = ''
@@ -3795,12 +3794,13 @@ def currentWeekStrategy(pre_move=0):
         if dataArr[0]['pct_chg'] < 20:
             continue
 
-        limitUpCodes_5.append(codeName)
-        limitUpCodeNames.append(code)
+        limitUpCodes.append(code)
+        limitUpCodeNames.append(codeName)
         
-    print('==============本周涨幅超过20个点的股: %d只股 ===============' % len(limitUpCodes_5))
-    for name in limitUpCodes_5:
-        print(name)
+    print('==============本周涨幅超过20个点的股: %d只股 ===============' % len(limitUpCodes))
+    # for name in limitUpCodeNames:
+    #     print(name)
+    stokeArrayToString(limitUpCodes)
 
 # 逻辑：找多少天内股价创新高的股票，历史新高
 def getNewHighPrice(num, pre_move = 0, sellDay = 0):
