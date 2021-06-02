@@ -72,7 +72,7 @@ def getRecentlimitup(dayNum):
     industryAndCode = Stoke.getCodeInfo()
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if isNeedDelCode(code):
+        if isNeedDelCode_300_688(code):
             continue
         if len(allStokeDate[code]) < 30:
             continue
@@ -102,7 +102,7 @@ def limitupFB(dayNum):
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if isNeedDelCode(code):
+        if isNeedDelCode_300_688(code):
             continue
         if len(allStokeDate[code]) < dayNum:
             # print("这是一直新上市的股票%s" % code)
@@ -123,7 +123,7 @@ def ZwZ():
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if isNeedDelCode(code):
+        if isNeedDelCode_300_688(code):
             continue
         dataArr = allStokeDate[code]
         if len(dataArr) < 2:
@@ -141,7 +141,13 @@ def ZwZ():
         print(code)
 
 # 逻辑：剔除300，688
-def isNeedDelCode(code):
+def isNeedDelCode_688(code):
+    if (code[0:3] == '688'):
+        return True
+    return False
+
+# 逻辑：剔除300，688
+def isNeedDelCode_300_688(code):
     if (code[0:3] == '300') | (code[0:3] == '688'):
         return True
     return False
@@ -4155,13 +4161,75 @@ def getNewPoBan(pre_move=0):
         print(name)
     print(codeString)
 
+# 逻辑：最近有过大涨的股，跌到boll线附近
+def ztAndBoll(pre_move=0):
+    dayNum = 30 + pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes = []
+    limitUpCodeNames = []
+    allCodes = list(allStokeDate.keys())
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if (isNeedDelCode_300_688(code)):
+            continue
+
+        dataArr = allStokeDate[code]
+        if (len(dataArr) < dayNum):
+            continue
+        
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        if ('ST' in codeName) | ('' == codeName):
+            continue
+
+        if '000158' in code:
+            print('')
+
+        # 最近20天涨幅找过8个点的次数，根据次数动态生成boll线价差
+        pct_8_num = 0
+        for data in dataArr[pre_move:20+pre_move]:
+            if (data['pct_chg']) > 8:
+                pct_8_num += 1
+        if pct_8_num < 3:
+            # 20天涨幅超过8个点的，少于3天的剔除
+            continue
+
+        numAndChage = {3:0.02, 4:0.02, 5:0.16, 6:0.2, 7:0.2, 8:0.2, 9:0.25, 10:0.25, 11:0.25, 12:0.25, 13:0.3}
+        change = numAndChage.get(pct_8_num)
+
+        # boll线价格
+        middleBollPrice = calMB(dataArr[pre_move:pre_move+20])
+        if (abs(calChange(dataArr[pre_move]['close'], middleBollPrice)) > change):
+            continue
+
+        # 剔除流通市值低于30亿
+        # newCodes = limitUpCodes[:100]
+        # codeStr = getStrWithList(newCodes)
+        # codeAllInfo = Stoke.get_daily_basic(codeStr)
+        # goodCodes = []
+        # for key in codeAllInfo.keys():
+        #     codeInfo = codeAllInfo[key]
+        #     if codeInfo['circ_mv'] < 300000:
+                
+
+        limitUpCodeNames.append(codeName)
+        limitUpCodes.append(code)
+    
+    pre_move_real_income(pre_move, limitUpCodes, [], 0)
+
+    print('==============最近有过大涨，跌到boll线附近的股票: %d ===============' % len(limitUpCodes))
+    for name in limitUpCodeNames:
+        print(name)
+    stokeArrayToString(limitUpCodes)    
+    
+
 if __name__ == "__main__":
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
     # codes = '000517.SZ,000570.SZ,000659.SZ,000711.SZ,000796.SZ,000898.SZ,000955.SZ,000990.SZ,002098.SZ,002100.SZ,002103.SZ,002217.SZ,002274.SZ,002277.SZ,002342.SZ,002343.SZ,002374.SZ,002423.SZ,002470.SZ,002476.SZ,002492.SZ,002559.SZ,002591.SZ,002671.SZ,002694.SZ,002889.SZ,002903.SZ,002988.SZ,300025.SZ,300043.SZ,300048.SZ,300055.SZ,300062.SZ,300070.SZ,300173.SZ,300240.SZ,300272.SZ,300296.SZ,300303.SZ,300325.SZ,300350.SZ,300389.SZ,300647.SZ,300713.SZ,300819.SZ,300824.SZ,600027.SH,600110.SH,600116.SH,600125.SH,600159.SH,600269.SH,600287.SH,600382.SH,600540.SH,600576.SH,600642.SH,600692.SH,600707.SH,600715.SH,600757.SH,600780.SH,600792.SH,600794.SH,600796.SH,600869.SH,601008.SH,601368.SH,601588.SH,601700.SH,601869.SH,601992.SH,603012.SH,603315.SH,603356.SH,603567.SH,603585.SH,603598.SH,603918.SH'
     # 获得当天的涨跌幅
     # getCurrentChange(codes)
 
-
+# (1-0.9)/0.9
 
     # getDayKLine('600051.SH', 60)
     # getZddddStoke(5)
@@ -4267,8 +4335,8 @@ if __name__ == "__main__":
     # 最强周线策略
     # weekStrategy(3, 0)
     # 本周涨幅超过20个点
-    for i in range(5):
-        currentWeekStrategy(i)
+    # for i in range(5):
+    #     currentWeekStrategy(i)
 
     
     # boll线策略，低位放量大涨策略
@@ -4320,4 +4388,8 @@ if __name__ == "__main__":
     # adjust_ZD_stoke()
     # getNewPoBan()
 
-# 600321 600844 002617 600281 600055 603690 
+    # 本周涨幅超过20个点
+    # currentWeekStrategy()
+
+    # 最近有过大涨，跌到boll线附近
+    ztAndBoll(0)
