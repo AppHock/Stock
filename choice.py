@@ -4188,14 +4188,17 @@ def ztAndBoll(pre_move=0):
         # 最近20天涨幅找过8个点的次数，根据次数动态生成boll线价差
         pct_8_num = 0
         for data in dataArr[pre_move:20+pre_move]:
-            if (data['pct_chg']) > 8:
+            if (data['pct_chg']) > 9:
                 pct_8_num += 1
         if pct_8_num < 3:
             # 20天涨幅超过8个点的，少于3天的剔除
             continue
 
-        numAndChage = {3:0.02, 4:0.02, 5:0.16, 6:0.2, 7:0.2, 8:0.2, 9:0.25, 10:0.25, 11:0.25, 12:0.25, 13:0.3}
+        numAndChage = {3:0.02, 4:0.02, 5:0.025, 6:0.2, 7:0.2, 8:0.2, 9:0.25, 10:0.25, 11:0.25, 12:0.25, 13:0.3}
         change = numAndChage.get(pct_8_num)
+
+        if (pct_8_num > 5):
+            change = 0.05
 
         # boll线价格
         middleBollPrice = calMB(dataArr[pre_move:pre_move+20])
@@ -4210,7 +4213,11 @@ def ztAndBoll(pre_move=0):
         # for key in codeAllInfo.keys():
         #     codeInfo = codeAllInfo[key]
         #     if codeInfo['circ_mv'] < 300000:
-                
+
+        # 当天跌幅超过7个点
+        if dataArr[pre_move]['pct_chg'] <= -7:
+            continue
+            print('当天跌幅超过7个点，重点观察:【%s】' % codeName)
 
         limitUpCodeNames.append(codeName)
         limitUpCodes.append(code)
@@ -4218,9 +4225,9 @@ def ztAndBoll(pre_move=0):
     pre_move_real_income(pre_move, limitUpCodes, [], 0)
 
     print('==============最近有过大涨，跌到boll线附近的股票: %d ===============' % len(limitUpCodes))
-    for name in limitUpCodeNames:
-        print(name)
-    stokeArrayToString(limitUpCodes)    
+    # for name in limitUpCodeNames:
+    #     print(name)
+    stokeArrayToString(limitUpCodeNames)
     
 
 if __name__ == "__main__":
@@ -4392,4 +4399,5 @@ if __name__ == "__main__":
     # currentWeekStrategy()
 
     # 最近有过大涨，跌到boll线附近
-    ztAndBoll(0)
+    for i in range(20):
+        ztAndBoll(i)
