@@ -3819,7 +3819,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if '688' in code:
+        if (isNeedDelCode_300_688(code)):
             continue
 
         if '002667' in code:
@@ -3838,23 +3838,24 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if (dataArr[pre_move]['pct_chg'] < 4):
             continue
 
-        # 收盘价目前最高, 剔除最近10天，涨停次数超过6次，低于2次
         isContinue = False
-        reDay = 0
+        
+        # 收盘价目前最高, 剔除最近10天，涨停次数超过6次，低于2次
+        # reDay = 0
         # 涨停天数
-        ztDay = 0
+        # ztDay = 0
         for data in dataArr[pre_move+1:dayNum]:
-            reDay += 1
-            if reDay <= 11:
-                if (data['pct_chg'] >= 9.7):
-                    ztDay += 1
-                    if (ztDay >= 6):
-                        isContinue = True
-                        break
-            else:
-                if ztDay < 1:
-                    isContinue = True
-                    break
+            # reDay += 1
+            # if reDay <= 11:
+            #     if (data['pct_chg'] >= 9.7):
+            #         ztDay += 1
+            #         if (ztDay >= 6):
+            #             isContinue = True
+            #             break
+            # else:
+            #     if ztDay < 1:
+            #         isContinue = True
+            #         break
                                         
             if dataArr[pre_move]['close'] < data['close']:
                 isContinue = True
@@ -4363,20 +4364,12 @@ if __name__ == "__main__":
         
     # 昨日涨停
     # getYesterDayLimint()
-    
-    # 创新高
-    # for i in range(6):
-        # getNewHighPrice(100, i, 0)
-
-    # for i in range(20):
-    #     getNewHighPrice(60, i, 0)
-
-    # getNewHighPrice(60, 1, 0)
 
     # 最近5天创业板涨停过的股票
     # recentFiveDayCYBZ()
 
-    # getNewHighPrice(60, 0, 0)
+    # 创新高
+    getNewHighPrice(60, 0, 0)
 
     # 昨日涨停
     # getYesterDayLimint()
@@ -4399,5 +4392,5 @@ if __name__ == "__main__":
     # currentWeekStrategy()
 
     # 最近有过大涨，跌到boll线附近
-    for i in range(20):
-        ztAndBoll(i)
+    # for i in range(20):
+    #     ztAndBoll(i)
