@@ -3718,9 +3718,10 @@ def lianxu_week_z(num, kLine):
     for name in limitUpCodes_5:
         print(name)
 
-# 逻辑：周线策略，目前最强，
-def weekStrategy(num, pre_move):
-    allStokeDate = Stoke.getRecentWeekData(num+1, pre_move)
+# 逻辑：周线策略，目前最强，第一周涨幅超过15个点，连续两周调整，每周涨跌幅不超过3个点
+def weekStrategy(pre_move):
+    num = 3
+    allStokeDate = Stoke.getRecentWeekData(num, pre_move)
     industryAndCode =  Stoke.getCodeInfo()
     limitUpCodes_5 = []
     allCodes = list(allStokeDate.keys())
@@ -3731,11 +3732,11 @@ def weekStrategy(num, pre_move):
             continue
 
         dataArr = allStokeDate[code]
-        if len(dataArr) < num+1:
+        if len(dataArr) < num:
             continue
 
-        # 最早一周必须是跌
-        if dataArr[num]['pct_chg'] > 0:
+        # 最早一周必须涨幅超过15个点
+        if dataArr[-1]['pct_chg'] < 15:
             continue
         
         codeName = industryAndCode.get(code, {}).get('name', '')
@@ -3743,31 +3744,41 @@ def weekStrategy(num, pre_move):
         if ('ST' in codeName) | (len(codeName) == 0):
             continue
 
-        if '中源协和' in codeName:
-            print('')
-        
         isContinue = False
-        for j in range(num):
-            pct_j = dataArr[j]['pct_chg']
-            
-            # 最近一个周线涨幅必须超过5个点，剔除低于5个点的
-            if (j == 0) & (pct_j < 5):
+        # 第二周，第三周跌幅不超过3个点
+        for data in dataArr[pre_move:pre_move+2]:
+            if (data['pct_chg'] < -3) | (data['pct_chg'] > 10):
                 isContinue = True
                 break
-                
-            if (pct_j < 3):
-                isContinue = True
-                break
-
         if isContinue:
             continue
+
         
-        if tradeData == '':
-            tradeData = dataArr[0]['trade_date']
+        # if '中源协和' in codeName:
+        #     print('')
+        
+        # isContinue = False
+        # for j in range(num):
+        #     pct_j = dataArr[j]['pct_chg']
+            
+        #     # 最近一个周线涨幅必须超过5个点，剔除低于5个点的
+        #     if (j == 0) & (pct_j < 5):
+        #         isContinue = True
+        #         break
+                
+        #     if (pct_j < 3):
+        #         isContinue = True
+        #         break
+
+        # if isContinue:
+        #     continue
+        
+        # if tradeData == '':
+        #     tradeData = dataArr[0]['trade_date']
 
         limitUpCodes_5.append(codeName)
-        
-    print('==============连续%d个，周线上涨，最新一周(%s)涨幅超过5个点: %d只股 ===============' % (num, tradeData, len(limitUpCodes_5)))
+    # print('==============连续%d个，周线上涨，最新一周(%s)涨幅超过5个点: %d只股 ===============' % (num, tradeData, len(limitUpCodes_5)))
+    print('==============周线上涨，涨一周，调整两周: %d只股 ===============' % len(limitUpCodes_5))
     for name in limitUpCodes_5:
         print(name)
 
@@ -4186,7 +4197,7 @@ def ztAndBoll(pre_move=0):
         if '000158' in code:
             print('')
 
-        # 最近20天涨幅找过8个点的次数，根据次数动态生成boll线价差
+        # 最近20天涨幅，超过1次的，根据次数动态生成boll线价差
         pct_8_num = 0
         for data in dataArr[pre_move:20+pre_move]:
             if (data['pct_chg']) > 9:
@@ -4341,7 +4352,7 @@ if __name__ == "__main__":
     # lianxu_week_z(3, 5)
     
     # 最强周线策略
-    # weekStrategy(3, 0)
+    weekStrategy(0)
     # 本周涨幅超过20个点
     # for i in range(5):
     #     currentWeekStrategy(i)
@@ -4369,7 +4380,7 @@ if __name__ == "__main__":
     # recentFiveDayCYBZ()
 
     # 创新高
-    getNewHighPrice(60, 0, 0)
+    # getNewHighPrice(60, 0, 0)
 
     # 昨日涨停
     # getYesterDayLimint()
