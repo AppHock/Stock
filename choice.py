@@ -47,7 +47,7 @@ globalDataPath = pathToSys(globalPath + 'test.dat')
 global_All_StokeData = {}
 global_IndustryAndCode = {}
 g_industryAndCode = Stoke.getCodeInfo()
-g_allStokeDate_60 = Stoke.getLocalKLineData(60)
+g_allStokeDate_100 = Stoke.getLocalKLineData(100)
 g_codeAndcodeName =  Stoke.getCodeAndCodeName()
 
 
@@ -271,7 +271,7 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
             if code == '':
                 continue
             codeName = obj
-        if '300453 w' in code:
+        if '002931' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -294,7 +294,7 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
             lossMoneyNum += 1
         else:
             str = '赚'
-        print('【%s】收益：%s%d个点' % (dataInfo[0].ljust(4), str, int(change*100)))
+        # print('【%s】收益：%s%d个点' % (dataInfo[0].ljust(4), str, int(change*100)))
     lostMoneyRate = int((lossMoneyNum/len(limitUpCodes))*100)
     print('日期：【%s】' % dataArr[pre_move]['trade_date'])
     print("策略收益情况，赚钱比例:%d%%, 亏钱比例:%d%%" % (100-lostMoneyRate, lostMoneyRate))
@@ -3810,9 +3810,9 @@ def currentWeekStrategy(pre_move=0):
 
 # 逻辑：找多少天内股价创新高的股票，历史新高
 def getNewHighPrice(num, pre_move = 0, sellDay = 0):
-    global g_allStokeDate_60, g_industryAndCode
+    global g_allStokeDate_100, g_industryAndCode
     dayNum = num
-    allStokeDate = g_allStokeDate_60
+    allStokeDate = g_allStokeDate_100
     industryAndCode =  g_industryAndCode
     limitUpCodeNames = []
     limitUpCodes = []
@@ -3822,7 +3822,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if (isNeedDelCode_300_688(code)):
             continue
 
-        if '002667' in code:
+        if '600395' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -3869,10 +3869,10 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
     if pre_move:
         pre_move_real_income(pre_move, limitUpCodes, [], sellDay)
         return
-    for name in limitUpCodeNames:
-        print(name)
+    # for name in limitUpCodeNames:
+    #     print(name)
 
-    stokeArrayToString(limitUpCodes)
+    # stokeArrayToString(limitUpCodes)
     
 
 # 逻辑：boll线策略，低位放量大涨策略
@@ -4369,7 +4369,8 @@ if __name__ == "__main__":
     # recentFiveDayCYBZ()
 
     # 创新高
-    getNewHighPrice(60, 0, 0)
+    # for i in range(20):
+    getNewHighPrice(100, 7, 10)
 
     # 昨日涨停
     # getYesterDayLimint()
