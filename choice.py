@@ -2438,6 +2438,7 @@ def getRecDown250K():
 【1】当日成交量是上个交易日2倍以上，最近20天成交量最高
 【2】当日涨幅>3
 【3】如果当天交易量比最近30天都高，这个是很好的
+【4】需要提出正在下跌的股，50个交易日未创新高
 
 1、当天收盘价在最近30天最高，今天成交量比最近30天都高
 2、当日成交量比最近10天都高，当天涨幅>3，最近60天内收盘价比当天高的要少于20天，低于当天收盘价的要超过35天，而且最近30天最高收盘价 < 当天收盘价*1.38
@@ -2472,8 +2473,14 @@ def bigVolBigZ(pre_move = 0):
         if len(dataArr) < dayNum:
             continue
 
-        # 当日成交量是上个交易日2倍以上
+        # 当日成交量是最近三个交易日2倍以上
         if dataArr[0+pre_move]['vol'] < dataArr[1+pre_move]['vol'] * 2:
+            continue
+
+        if dataArr[0+pre_move]['vol'] < dataArr[2+pre_move]['vol'] * 2:
+            continue
+
+        if dataArr[0+pre_move]['vol'] < dataArr[3+pre_move]['vol'] * 2:
             continue
         
         # 最近20天成交量最高，当天收盘价20天内最高
@@ -2490,7 +2497,7 @@ def bigVolBigZ(pre_move = 0):
             continue
 
         # 当日涨幅>3
-        if dataArr[0+pre_move]['pct_chg'] < 3:
+        if dataArr[0+pre_move]['pct_chg'] < 1:
             continue
         
         limitUpCodes.append(code)
@@ -4294,7 +4301,7 @@ if __name__ == "__main__":
     # getRiskWithMiddleBoll()
 
     # getRecDown250K()
-    # bigVolBigZ()
+    bigVolBigZ(7)
     # getMoneyWithMACD()
 
     # print('\n===============下面是宝的策略所选股票===============\n')
@@ -4356,7 +4363,6 @@ if __name__ == "__main__":
     # for i in range(3):
         # bigVolBigZ(8)
         # bigVolBigZ_New(i)
-    # bigVolBigZ(8)
 
     # bigVolBigZ_New(16)
     # for i in range(5):
