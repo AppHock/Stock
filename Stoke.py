@@ -555,7 +555,7 @@ if __name__ == "__main__":
     else:
         print('非首次运行，不需要创建路径文件')
     # getHistoryDataByDate()
-    getQFQVerPrice()
+    # getQFQVerPrice()
     # 更新股票行情信息
     getAllStokeInfo()
     # getRecentWeekData(4, 0)

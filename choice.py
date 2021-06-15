@@ -49,6 +49,7 @@ global_IndustryAndCode = {}
 g_industryAndCode = Stoke.getCodeInfo()
 g_allStokeDate_100 = Stoke.getLocalKLineData(100)
 g_codeAndcodeName =  Stoke.getCodeAndCodeName()
+g_allCodes = []
 
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
@@ -3817,7 +3818,7 @@ def currentWeekStrategy(pre_move=0):
 
 # 逻辑：找多少天内股价创新高的股票，历史新高
 def getNewHighPrice(num, pre_move = 0, sellDay = 0):
-    global g_allStokeDate_100, g_industryAndCode
+    global g_allStokeDate_100, g_industryAndCode, g_allCodes
     dayNum = num
     allStokeDate = g_allStokeDate_100
     industryAndCode =  g_industryAndCode
@@ -3872,6 +3873,11 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         
         limitUpCodeNames.append(codeName)
         limitUpCodes.append(code)
+        
+        if dataArr[0]['close'] > dataArr[pre_move]['close'] * 1.05:
+            if not code in g_allCodes:
+                g_allCodes.append(code)
+
     print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodeNames)))
     if pre_move:
         pre_move_real_income(pre_move, limitUpCodes, [], sellDay)
@@ -4301,7 +4307,9 @@ if __name__ == "__main__":
     # getRiskWithMiddleBoll()
 
     # getRecDown250K()
-    bigVolBigZ(7)
+
+    # 放量涨
+    # bigVolBigZ(7)
     # getMoneyWithMACD()
 
     # print('\n===============下面是宝的策略所选股票===============\n')
@@ -4361,12 +4369,7 @@ if __name__ == "__main__":
 
     # 放巨量上涨，之后会有新高
     # for i in range(3):
-        # bigVolBigZ(8)
         # bigVolBigZ_New(i)
-
-    # bigVolBigZ_New(16)
-    # for i in range(5):
-    #     bigVolBigZ_New(i, 0)
         
     # 昨日涨停
     # getYesterDayLimint()
@@ -4375,9 +4378,9 @@ if __name__ == "__main__":
     # recentFiveDayCYBZ()
 
     # 创新高
-    # for i in range(20):
-    getNewHighPrice(100, 7, 10)
-
+    for i in range(3, 10):
+        getNewHighPrice(100, i, 0)
+    stokeArrayToString(g_allCodes)
     # 昨日涨停
     # getYesterDayLimint()
 
