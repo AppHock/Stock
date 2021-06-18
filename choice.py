@@ -47,8 +47,9 @@ globalDataPath = pathToSys(globalPath + 'test.dat')
 global_All_StokeData = {}
 global_IndustryAndCode = {}
 g_industryAndCode = Stoke.getCodeInfo()
-g_allStokeDate_60 = Stoke.getLocalKLineData(60)
+g_allStokeDate_100 = Stoke.getLocalKLineData(100)
 g_codeAndcodeName =  Stoke.getCodeAndCodeName()
+g_allCodes = []
 
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
@@ -271,7 +272,7 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
             if code == '':
                 continue
             codeName = obj
-        if '300453 w' in code:
+        if '002931' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -294,7 +295,7 @@ def pre_move_real_income(pre_move=0, codes=[], codeNames=[], sellDay=0):
             lossMoneyNum += 1
         else:
             str = '赚'
-        print('【%s】收益：%s%d个点' % (dataInfo[0].ljust(4), str, int(change*100)))
+        # print('【%s】收益：%s%d个点' % (dataInfo[0].ljust(4), str, int(change*100)))
     lostMoneyRate = int((lossMoneyNum/len(limitUpCodes))*100)
     print('日期：【%s】' % dataArr[pre_move]['trade_date'])
     print("策略收益情况，赚钱比例:%d%%, 亏钱比例:%d%%" % (100-lostMoneyRate, lostMoneyRate))
@@ -2438,6 +2439,7 @@ def getRecDown250K():
 【1】当日成交量是上个交易日2倍以上，最近20天成交量最高
 【2】当日涨幅>3
 【3】如果当天交易量比最近30天都高，这个是很好的
+【4】需要提出正在下跌的股，50个交易日未创新高
 
 1、当天收盘价在最近30天最高，今天成交量比最近30天都高
 2、当日成交量比最近10天都高，当天涨幅>3，最近60天内收盘价比当天高的要少于20天，低于当天收盘价的要超过35天，而且最近30天最高收盘价 < 当天收盘价*1.38
@@ -2472,8 +2474,14 @@ def bigVolBigZ(pre_move = 0):
         if len(dataArr) < dayNum:
             continue
 
-        # 当日成交量是上个交易日2倍以上
+        # 当日成交量是最近三个交易日2倍以上
         if dataArr[0+pre_move]['vol'] < dataArr[1+pre_move]['vol'] * 2:
+            continue
+
+        if dataArr[0+pre_move]['vol'] < dataArr[2+pre_move]['vol'] * 2:
+            continue
+
+        if dataArr[0+pre_move]['vol'] < dataArr[3+pre_move]['vol'] * 2:
             continue
         
         # 最近20天成交量最高，当天收盘价20天内最高
@@ -2490,7 +2498,7 @@ def bigVolBigZ(pre_move = 0):
             continue
 
         # 当日涨幅>3
-        if dataArr[0+pre_move]['pct_chg'] < 3:
+        if dataArr[0+pre_move]['pct_chg'] < 1:
             continue
         
         limitUpCodes.append(code)
@@ -3821,9 +3829,9 @@ def currentWeekStrategy(pre_move=0):
 
 # 逻辑：找多少天内股价创新高的股票，历史新高
 def getNewHighPrice(num, pre_move = 0, sellDay = 0):
-    global g_allStokeDate_60, g_industryAndCode
+    global g_allStokeDate_100, g_industryAndCode, g_allCodes
     dayNum = num
-    allStokeDate = g_allStokeDate_60
+    allStokeDate = g_allStokeDate_100
     industryAndCode =  g_industryAndCode
     limitUpCodeNames = []
     limitUpCodes = []
@@ -3833,7 +3841,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if (isNeedDelCode_300_688(code)):
             continue
 
-        if '002667' in code:
+        if '600395' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -3876,14 +3884,19 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         
         limitUpCodeNames.append(codeName)
         limitUpCodes.append(code)
+        
+        if dataArr[0]['close'] > dataArr[pre_move]['close'] * 1.05:
+            if not code in g_allCodes:
+                g_allCodes.append(code)
+
     print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodeNames)))
     if pre_move:
         pre_move_real_income(pre_move, limitUpCodes, [], sellDay)
         return
-    for name in limitUpCodeNames:
-        print(name)
+    # for name in limitUpCodeNames:
+    #     print(name)
 
-    stokeArrayToString(limitUpCodes)
+    # stokeArrayToString(limitUpCodes)
     
 
 # 逻辑：boll线策略，低位放量大涨策略
@@ -4305,7 +4318,9 @@ if __name__ == "__main__":
     # getRiskWithMiddleBoll()
 
     # getRecDown250K()
-    # bigVolBigZ()
+
+    # 放量涨
+    # bigVolBigZ(7)
     # getMoneyWithMACD()
 
     # print('\n===============下面是宝的策略所选股票===============\n')
@@ -4365,13 +4380,7 @@ if __name__ == "__main__":
 
     # 放巨量上涨，之后会有新高
     # for i in range(3):
-        # bigVolBigZ(8)
         # bigVolBigZ_New(i)
-    # bigVolBigZ(8)
-
-    # bigVolBigZ_New(16)
-    # for i in range(5):
-    #     bigVolBigZ_New(i, 0)
         
     # 昨日涨停
     # getYesterDayLimint()
@@ -4380,6 +4389,9 @@ if __name__ == "__main__":
     # recentFiveDayCYBZ()
 
     # 创新高
+    for i in range(3, 10):
+        getNewHighPrice(100, i, 0)
+    stokeArrayToString(g_allCodes)
     # getNewHighPrice(60, 0, 0)
 
     # 昨日涨停

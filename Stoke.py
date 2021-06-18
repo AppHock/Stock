@@ -429,11 +429,19 @@ def get_daily_basic(codesStr, date=getCurrentDayDate()):
 
 # 逻辑：获取前复权的250日均线
 def getQFQVerPrice():
-    # data = tu.pro_bar(ts_code='000001.SZ', adj='qfq', start_date='20180101', end_date='20180111')
-    data = tu.pro_bar(ts_code='000001.SZ', start_date='20180101', end_date='20181011', adj='qfq')
+    data = tu.pro_bar(ts_code='000001.SZ', adj='qfq', start_date='20210501', end_date='20210611')
     for codeInfo in data.values:
         print(codeInfo)
-
+'''
+code        = codeInfo[0]
+trade_date  = codeInfo[1]
+open        = codeInfo[2]
+high        = codeInfo[3]
+low         = codeInfo[4]
+close       = codeInfo[5]
+pct_chg     = codeInfo[8]
+vol         = codeInfo[9
+'''
 def getLowPriceMainMoney_3():
     #获取单日全部股票数据
     code_moneyflow = {}
