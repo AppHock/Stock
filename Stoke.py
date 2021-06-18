@@ -200,7 +200,7 @@ def getAllStokeData(dayNum):
         dataArr = allStokeDate[code]
         path = saveDir + code + '.csv'
         symbolFile = open(path, 'w+', encoding='utf8')
-        symbolFile.write('ts_code, trade_date, open, high, low, close, pct_chg, vol\n')
+        symbolFile.write('ts_code, trade_date, open, high, low, close, pre_close, pct_chg, vol\n')
         symbolFile.flush()
         for data in dataArr:
             s = '%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
@@ -210,6 +210,7 @@ def getAllStokeData(dayNum):
                     data['high'],
                     data['low'],
                     data['close'],
+                    data['pre_close'],
                     data['pct_chg'],
                     data['vol'],
                 )
@@ -250,7 +251,7 @@ def getRecentData(dayNum, time=0):
                     return allStokeDate
             # 获取日线行情  ------ https://www.waditu.com/document/2?doc_id=27
             # vol:成交量、pct_chg:涨跌幅
-            data = pro.daily(trade_date=date, fields='ts_code, trade_date, open, high, low, close, pct_chg, vol')
+            data = pro.daily(trade_date=date, fields='ts_code, trade_date, open, high, low, close, pre_close, pct_chg, vol')
             dateAndUnix = getPreDateAndUnixTime(dateUnix)
             date = dateAndUnix[0]
             dateUnix = dateAndUnix[1]
@@ -265,8 +266,9 @@ def getRecentData(dayNum, time=0):
                     dic['high'] = stokeData[index+2]
                     dic['low'] = stokeData[index+3]
                     dic['close'] = stokeData[index+4]
-                    dic['pct_chg'] = stokeData[index+5]
-                    dic['vol'] = stokeData[index+6]
+                    dic['pre_close'] = stokeData[index+5]
+                    dic['pct_chg'] = stokeData[index+6]
+                    dic['vol'] = stokeData[index+7]
                     
                     # 时间越小，在数组位置约靠后
                     dataArr.append(dic)
@@ -546,6 +548,14 @@ if __name__ == "__main__":
         os.makedirs(globalPath)
     else:
         print('非首次运行，不需要创建路径文件')
+
+
+    data = pro.daily(trade_date='20210611', fields='ts_code, trade_date, open, high, low, close, pre_close, pct_chg, vol')
+    for stokeData in data.values:
+        code = stokeData[0]
+        if '600753' in code:
+            print('ww')
+
     # getHistoryDataByDate()
     # getQFQVerPrice()
     # 更新股票行情信息
