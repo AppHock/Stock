@@ -3847,7 +3847,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if (isNeedDelCode_300_688(code)):
             continue
 
-        if '600395' in code:
+        if '000982' in code:
             print('')
 
         dataArr = allStokeDate[code]
@@ -3896,11 +3896,11 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
                 g_allCodes.append(code)
 
     print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodeNames)))
-    if pre_move:
-        pre_move_real_income(pre_move, limitUpCodes, [], sellDay)
-        return
-    # for name in limitUpCodeNames:
-    #     print(name)
+    # if pre_move:
+    #     pre_move_real_income(pre_move, limitUpCodes, [], sellDay)
+    #     return
+    for name in limitUpCodeNames:
+        print(name)
 
     # stokeArrayToString(limitUpCodes)
     
@@ -4430,12 +4430,17 @@ if __name__ == "__main__":
     # 最近5天创业板涨停过的股票
     # recentFiveDayCYBZ()
 
-    zdayMax()
-    # 创新高
-    for i in range(3, 10):
-        getNewHighPrice(100, i, 0)
-    stokeArrayToString(g_allCodes)
-    # getNewHighPrice(60, 0, 0)
+    # 巨量成交量
+    # zdayMax()
+
+    getNewHighPrice(100, 5, 0)
+    
+
+    # 创新高，一直目前一直在赚钱的股
+    # for i in range(3, 10):
+    #     getNewHighPrice(100, i, 0)
+    # stokeArrayToString(g_allCodes)
+    
 
     # 昨日涨停
     # getYesterDayLimint()
