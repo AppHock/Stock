@@ -3841,14 +3841,12 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
     industryAndCode =  g_industryAndCode
     limitUpCodeNames = []
     limitUpCodes = []
+    limiUpZTCodes = []
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if (isNeedDelCode_300_688(code)):
+        if (isNeedDelCode_688(code)):
             continue
-
-        if '000982' in code:
-            print('')
 
         dataArr = allStokeDate[code]
         if len(dataArr) < dayNum:
@@ -3889,9 +3887,19 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
             continue
         
         limitUpCodeNames.append(codeName)
-        limitUpCodes.append(code)
         
-        if dataArr[0]['close'] > dataArr[pre_move]['close'] * 1.05:
+        if '300' in code[:3]:
+            if (dataArr[pre_move]['pct_chg'] > 19):
+                limiUpZTCodes.append(code)
+            else:
+                limitUpCodes.append(code)
+        else:
+            if (dataArr[pre_move]['pct_chg'] > 9.7):
+                limiUpZTCodes.append(code)
+            else:
+                limitUpCodes.append(code)
+        
+        if dataArr[0]['close'] > dataArr[pre_move]['close'] * 0.95:
             if not code in g_allCodes:
                 g_allCodes.append(code)
 
@@ -3899,10 +3907,14 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
     # if pre_move:
     #     pre_move_real_income(pre_move, limitUpCodes, [], sellDay)
     #     return
-    for name in limitUpCodeNames:
-        print(name)
 
-    # stokeArrayToString(limitUpCodes)
+    # for name in limitUpCodeNames:
+    #     print(name)
+    
+    print('涨停创新高')
+    stokeArrayToString(limiUpZTCodes)
+    print('\n\n创新高')
+    stokeArrayToString(limitUpCodes)
     
 
 # 逻辑：boll线策略，低位放量大涨策略
@@ -4433,7 +4445,7 @@ if __name__ == "__main__":
     # 巨量成交量
     # zdayMax()
 
-    getNewHighPrice(100, 5, 0)
+    getNewHighPrice(100, 0, 0)
     
 
     # 创新高，一直目前一直在赚钱的股
@@ -4465,3 +4477,9 @@ if __name__ == "__main__":
     # 最近有过大涨，跌到boll线附近
     # for i in range(20):
     #     ztAndBoll(i)
+
+    '''
+    【1】当日创新高，走势很好看的，第二天可以下单
+    【2】当日创新高后，就跌下来的股，不够强势，这种股庄太弱，反弹小赚就走
+    【3】买到赚钱强势股，从买那天开始就涨，没亏钱过，这种股很强势，结合涨停股走势盘中看，走不走
+    '''
