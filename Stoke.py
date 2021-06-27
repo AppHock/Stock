@@ -1,5 +1,7 @@
+from posixpath import lexists
 from numpy.core.arrayprint import array2string
 from numpy.core.numeric import allclose
+from numpy.testing._private.utils import print_assert_equal
 import tushare as tu
 import time
 import datetime
@@ -615,7 +617,8 @@ def getQFQStokeData(codes=[], startDate='', endDate=''):
         needNum -= 1
         codeName = codeAndCodeName.get(code, '')
         data = tu.pro_bar(ts_code=code, adj='qfq', start_date=startDate, end_date=endDate)
-
+        if data is None:
+            continue
         if len(data.values) != 0:
             for stokeData in data.values:
                 code = stokeData[0]
