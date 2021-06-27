@@ -4310,6 +4310,42 @@ def zdayMax(pre_move=0):
     for name in limitUpCodeNames:
         print(name)
 
+def 高开低走(pre_move):
+    dayNum = 1 + pre_move
+    allStokeDate = getLocalKLineData(dayNum)
+    industryAndCode =  Stoke.getCodeInfo()
+    limitUpCodes = []
+    limitUpCodeNames = []
+    allCodes = list(allStokeDate.keys())
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if isNeedDelCode_688(code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if (len(dataArr) < dayNum):
+            continue
+        
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        if ('' == codeName):
+            continue
+        
+        # 开盘价 > 昨收 *1.02
+        if (dataArr[pre_move]['pre_close']*1.02) > dataArr[pre_move]['open']:
+            continue
+
+        # 收盘价 < 开盘价
+        if (dataArr[pre_move]['close']*1.03) > dataArr[pre_move]['open']:
+            continue
+
+
+
+        limitUpCodes.append(code)
+        limitUpCodeNames.append(codeName)
+    print('==============%s高开低走的股票: %d ===============' % (dataArr[pre_move]['trade_date'], len(limitUpCodes)))
+    for name in limitUpCodeNames:
+        print(name)
+
 if __name__ == "__main__":
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
     # codes = '000517.SZ,000570.SZ,000659.SZ,000711.SZ,000796.SZ,000898.SZ,000955.SZ,000990.SZ,002098.SZ,002100.SZ,002103.SZ,002217.SZ,002274.SZ,002277.SZ,002342.SZ,002343.SZ,002374.SZ,002423.SZ,002470.SZ,002476.SZ,002492.SZ,002559.SZ,002591.SZ,002671.SZ,002694.SZ,002889.SZ,002903.SZ,002988.SZ,300025.SZ,300043.SZ,300048.SZ,300055.SZ,300062.SZ,300070.SZ,300173.SZ,300240.SZ,300272.SZ,300296.SZ,300303.SZ,300325.SZ,300350.SZ,300389.SZ,300647.SZ,300713.SZ,300819.SZ,300824.SZ,600027.SH,600110.SH,600116.SH,600125.SH,600159.SH,600269.SH,600287.SH,600382.SH,600540.SH,600576.SH,600642.SH,600692.SH,600707.SH,600715.SH,600757.SH,600780.SH,600792.SH,600794.SH,600796.SH,600869.SH,601008.SH,601368.SH,601588.SH,601700.SH,601869.SH,601992.SH,603012.SH,603315.SH,603356.SH,603567.SH,603585.SH,603598.SH,603918.SH'
@@ -4445,7 +4481,11 @@ if __name__ == "__main__":
     # 巨量成交量
     # zdayMax()
 
-    getNewHighPrice(100, 0, 0)
+
+    for i in range(5):
+        高开低走(i)
+
+    # getNewHighPrice(100, 0, 0)
     
 
     # 创新高，一直目前一直在赚钱的股

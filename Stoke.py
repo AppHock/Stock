@@ -1,3 +1,4 @@
+from numpy.core.arrayprint import array2string
 from numpy.core.numeric import allclose
 import tushare as tu
 import time
@@ -29,6 +30,7 @@ tu.set_token(token)
 pro = tu.pro_api()
 globalSys_Mac = platform.system().lower() == 'darwin'
 print('当前操作系统:%s' % platform.system().lower())
+g_needUpdateLocalDataCodes = []
 
 # 逻辑：路径转换
 def pathToSys(path):
@@ -152,6 +154,16 @@ def unixTime2LocalDate(timestamp, dateFormat="%Y-%m-%d %H:%M:%S"):
     dt = time.strftime(dateFormat, time_local)
     return dt
 
+# 逻辑：股票代码数据转空格字符串
+def stokeArrayToString(codes):
+    codeStr = ''
+    for code in codes:
+        if codeStr == '':
+            codeStr = code
+        else:
+            codeStr += ' ' + code
+    print(codeStr)
+
 # 逻辑：从本地获取数据
 def getLocalData():
     localData = {}
@@ -200,21 +212,20 @@ def getAllStokeData(dayNum):
     print('%d交易数据下载完成' % dayNum)
     return allStokeDate
 
-# 逻辑：往本地重写数据
-def reloadWriteDataToLocal(allStokeData):
-    print('清空本地缓存数据，开始往本地重写前复权数据')
+# 逻辑：获取最近dayNum天的所有股票的数据
+def getOldAllStokeData(dayNum):
     saveDir = pathToSys(globalPath + 'DayKLine/')
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
+    allStokeDate = getOldRecentData(dayNum)
+    allCodes = list(allStokeDate.keys())
 
-    allCodes = list(allStokeData.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        dataArr = allStokeData[code]
+        dataArr = allStokeDate[code]
         path = saveDir + code + '.csv'
         symbolFile = open(path, 'w+', encoding='utf8')
         symbolFile.write('ts_code, trade_date, open, high, low, close, pre_close, pct_chg, vol\n')
-        symbolFile.flush()
         for data in dataArr:
             s = '%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
                     code,
@@ -228,7 +239,37 @@ def reloadWriteDataToLocal(allStokeData):
                     data['vol'],
                 )
             symbolFile.write(s)
-            symbolFile.flush()
+        symbolFile.flush()
+    print('%d天交易数据下载完成' % dayNum)
+    return allStokeDate
+
+# 逻辑：往本地重写数据
+def reloadWriteDataToLocal(allStokeData):
+    print('清空最近出现复权的本地缓存数据，开始往本地重写前复权数据')
+    saveDir = pathToSys(globalPath + 'DayKLine/')
+    if not os.path.exists(saveDir):
+        os.makedirs(saveDir)
+
+    allCodes = list(allStokeData.keys())
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        dataArr = allStokeData[code]
+        path = saveDir + code + '.csv'
+        symbolFile = open(path, 'w+', encoding='utf8')
+        for data in dataArr:
+            s = '%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
+                    code,
+                    data['trade_date'],
+                    data['open'],
+                    data['high'],
+                    data['low'],
+                    data['close'],
+                    data['pre_close'],
+                    data['pct_chg'],
+                    data['vol'],
+                )
+            symbolFile.write(s)
+        symbolFile.flush()
     print('交易数据下载完成')
 
 # 逻辑：写入新的交易日K数据
@@ -254,8 +295,7 @@ def writeNewDayData(dict):
         allArr = dataArr + allLocalArr
 
         # 写入头部名称
-        symbolFile.write('ts_code, trade_date, open, high, low, close, pre_colse, pct_chg, vol\n')
-        symbolFile.flush()
+        symbolFile.write('ts_code, trade_date, open, high, low, close, pre_close, pct_chg, vol\n')
         # dataframe = pd.DataFrame({'a_name':a,'b_name':b})
         for data in allArr:
             s = '%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
@@ -270,13 +310,12 @@ def writeNewDayData(dict):
                     data['vol'],
                 )
             symbolFile.write(s)
-            symbolFile.flush()
+        symbolFile.flush()
     print('保存完成')
 
 
 # 逻辑：获取最新几天的数据， time默认为0，time主要解决因停市导致数据没有的问题
 def getRecentData(localUnix = 0, dayNum=0, time=0):
-        
     currentTime = getCurrentUnixTime()
     dateAndUnix = getPreDateAndUnixTime(currentTime)
 
@@ -297,7 +336,8 @@ def getRecentData(localUnix = 0, dayNum=0, time=0):
     # 昨日的收盘价
     yesterdayClosePrice = 0
     # 需要重新更新本地数据的股票
-    needUpdateLocalDataCodes = []
+    global g_needUpdateLocalDataCodes
+    g_needUpdateLocalDataCodes = []
     # 获取本地最近一天数据
     allLocalData = getLocalKLineData(1)
     
@@ -312,13 +352,11 @@ def getRecentData(localUnix = 0, dayNum=0, time=0):
         while 1:
             if time & (tempTime == time):
                 # 先把已经除权的股票全部更新完成之后，再去更新未除权的股票
-                reloadGetQFQStokeDataUpdateLocal(needUpdateLocalDataCodes)
                 return allStokeDate
             if time:
                 tempTime += 1
                 if tempTime > time:
                     # 先把已经除权的股票全部更新完成之后，再去更新未除权的股票
-                    reloadGetQFQStokeDataUpdateLocal(needUpdateLocalDataCodes)
                     return allStokeDate
             # 获取日线行情  ------ https://www.waditu.com/document/2?doc_id=27
             # vol:成交量、pct_chg:涨跌幅
@@ -338,7 +376,7 @@ def getRecentData(localUnix = 0, dayNum=0, time=0):
             for i in range(len(data.values)):
                 stokeData = data.values[i]
                 code = stokeData[0]
-                if code in needUpdateLocalDataCodes:
+                if code in g_needUpdateLocalDataCodes:
                     continue
 
                 dataArr = allStokeDate.get(code, [])
@@ -354,7 +392,7 @@ def getRecentData(localUnix = 0, dayNum=0, time=0):
                 # 昨日收盘价和当天昨日收盘价不一致，说明当天除权了
                 if yesterdayClosePrice != stokeData[6]:
                     print('【%s】在【%s】进行了除权' % (code, stokeData[1]))
-                    needUpdateLocalDataCodes.append(code)
+                    g_needUpdateLocalDataCodes.append(code)
                     continue
                 
                 dic = {}
@@ -375,11 +413,68 @@ def getRecentData(localUnix = 0, dayNum=0, time=0):
                     dataArr.append(dic)
                 allStokeDate[code] = dataArr
     # 先把已经除权的股票全部更新完成之后，再去更新未除权的股票
-    reloadGetQFQStokeDataUpdateLocal(needUpdateLocalDataCodes)
+    return allStokeDate
+
+# 逻辑：获取最新几天的数据， time默认为0，time主要解决因停市导致数据没有的问题
+def getOldRecentData(dayNum, time=0):
+    currentTime = getCurrentUnixTime() - 3 * 24 * 60 * 60
+    dateAndUnix = getPreDateAndUnixTime(currentTime)
+    date = dateAndUnix[0]
+    dateUnix = dateAndUnix[1]
+
+    if 1: #如果当天下午4点以后，则可以获得到当前数据
+        date = unixTime2LocalDate(currentTime, "%Y%m%d")
+        dateUnix = currentTime
+
+    allStokeDate = {}
+    # for循环获取每天的全部股票的交易信息
+    tempTime = 0
+    
+    if dayNum == time == 0:
+        print("输入的日期格式不对，dayNum和time不能同时为0")
+    readDay = 0
+    if dayNum:
+        readDay = dayNum
+    else:
+        readDay = time
+    for i in range(readDay):
+        while 1:
+            if time & (tempTime == time):
+                return allStokeDate
+            if time:
+                tempTime += 1
+                if tempTime > time:
+                    return allStokeDate
+            # 获取日线行情  ------ https://www.waditu.com/document/2?doc_id=27
+            # vol:成交量、pct_chg:涨跌幅
+            data = pro.daily(trade_date=date, fields='ts_code, trade_date, open, high, low, close, pre_close, pct_chg, vol')
+            dateAndUnix = getPreDateAndUnixTime(dateUnix)
+            date = dateAndUnix[0]
+            dateUnix = dateAndUnix[1]
+            if len(data.values) != 0:
+                for stokeData in data.values:
+                    code = stokeData[0]
+                    dataArr = allStokeDate.get(code, [])
+                    dic = {}
+                    index = 1
+                    dic['trade_date'] = stokeData[1]
+                    dic['open'] = stokeData[index+1]
+                    dic['high'] = stokeData[index+2]
+                    dic['low'] = stokeData[index+3]
+                    dic['close'] = stokeData[index+4]
+                    dic['pre_close'] = stokeData[index+5]
+                    dic['pct_chg'] = stokeData[index+6]
+                    dic['vol'] = stokeData[index+7]
+                    
+                    # 时间越小，在数组位置约靠后
+                    dataArr.append(dic)
+                    allStokeDate[code] = dataArr
+                break
     return allStokeDate
 
 # 逻辑：新增新的数据
 def addNewData():
+    global g_needUpdateLocalDataCodes
     # 获取本地保存的最新的日期(20200703)、时间戳
     reTopDate = getReTopDate()
     reTopUnix = date2UnixTime(reTopDate, "%Y%m%d")
@@ -399,6 +494,7 @@ def addNewData():
     if len(list(allStokeDate.keys())) > 0:
         # 开始往本地csv文件头部插入新的数据
         writeNewDayData(allStokeDate)
+    reloadGetQFQStokeDataUpdateLocal(g_needUpdateLocalDataCodes)
 
 # 逻辑：重新获取复权的数据，并更新本地文件
 def reloadGetQFQStokeDataUpdateLocal(codes):
@@ -499,6 +595,7 @@ def getQFQStokeData(codes=[], startDate='', endDate=''):
     codeAndCodeName = getCodeAndCodeName()
     if len(codes) == 0:
         allCodes = getAllStokeCode()
+
         for code in allCodes:
             codeName = codeAndCodeName.get(code, '')
             if ('退' in codeName) | ('688' in code[:3]):
@@ -518,6 +615,7 @@ def getQFQStokeData(codes=[], startDate='', endDate=''):
         needNum -= 1
         codeName = codeAndCodeName.get(code, '')
         data = tu.pro_bar(ts_code=code, adj='qfq', start_date=startDate, end_date=endDate)
+
         if len(data.values) != 0:
             for stokeData in data.values:
                 code = stokeData[0]
@@ -635,7 +733,7 @@ def getRecentWeekData(weekNum, pre_move=0):
 
     # 第二步：遍历最近几周的日期，获取所有股票信息
     for date in allWeekTradeDate[pre_move:weekNum+pre_move]:
-        allData = pro.weekly(trade_date=date, fields='ts_code, trade_date, open, high, low, close, pct_chg, vol')
+        allData = pro.weekly(trade_date=date, fields='ts_code, trade_date, open, high, low, close, pre_close, pct_chg, vol')
         if len(allData.values) != 0:
             for stokeData in allData.values:
                 code = stokeData[0]
@@ -647,8 +745,9 @@ def getRecentWeekData(weekNum, pre_move=0):
                 dic['high'] = stokeData[index+2]
                 dic['low'] = stokeData[index+3]
                 dic['close'] = stokeData[index+4]
-                dic['pct_chg'] = (stokeData[index+5])*100
-                dic['vol'] = stokeData[index+6]
+                dic['pre_close'] = stokeData[index+5]
+                dic['pct_chg'] = stokeData[index+7]
+                dic['vol'] = stokeData[index+8]
                 
                 # 时间越小，在数组位置约靠后
                 dataArr.append(dic)
@@ -665,7 +764,6 @@ if __name__ == "__main__":
     else:
         print('非首次运行，不需要创建路径文件')
 
-
     # getHistoryDataByDate()
     # getAllStokeData(5)
 
@@ -674,11 +772,14 @@ if __name__ == "__main__":
     # getRecentWeekData(4, 0)
 
     # 每天都可以跑一次，把最新的日K数据拉取到本地
-    addNewData()
+    # addNewData()
 
     
     # 从网络获取最近120天的前复权数据保存在本地
-    # getQFQStokeData()
+    getQFQStokeData()
+
+    # 通过日期下载未复权的数据，主要用于测试，复权策略
+    # getOldAllStokeData(10)
     
     # 每次开始做回归测试时，需要先本地数据全部读取到内存中，以便其他进场获取数据
     getLocalData()
