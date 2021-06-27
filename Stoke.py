@@ -771,12 +771,13 @@ if __name__ == "__main__":
     getAllStokeInfo()
     # getRecentWeekData(4, 0)
 
-    # 每天都可以跑一次，把最新的日K数据拉取到本地
-    # addNewData()
-
-    
-    # 从网络获取最近120天的前复权数据保存在本地
-    getQFQStokeData()
+    saveDir = pathToSys(globalPath + 'DayKLine/')
+    if not os.path.exists(saveDir):
+        # 从网络获取最近120天的前复权数据保存在本地
+        getQFQStokeData()
+    else:
+        # 每天都可以跑一次，把最新的日K数据拉取到本地
+        addNewData()
 
     # 通过日期下载未复权的数据，主要用于测试，复权策略
     # getOldAllStokeData(10)
