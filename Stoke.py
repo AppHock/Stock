@@ -258,6 +258,8 @@ def reloadWriteDataToLocal(allStokeData):
         dataArr = allStokeData[code]
         path = saveDir + code + '.csv'
         symbolFile = open(path, 'w+', encoding='utf8')
+        # 写入头部名称
+        symbolFile.write('ts_code, trade_date, open, high, low, close, pre_close, pct_chg, vol\n')
         for data in dataArr:
             s = '%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n' % (
                     code,

@@ -4482,16 +4482,16 @@ if __name__ == "__main__":
     # zdayMax()
 
 
-    for i in range(5):
-        高开低走(i)
+    # for i in range(5):
+    #     高开低走(i)
 
     # getNewHighPrice(100, 0, 0)
     
 
     # 创新高，一直目前一直在赚钱的股
-    # for i in range(3, 10):
-    #     getNewHighPrice(100, i, 0)
-    # stokeArrayToString(g_allCodes)
+    for i in range(3, 10):
+        getNewHighPrice(100, i, 0)
+    stokeArrayToString(g_allCodes)
     
 
     # 昨日涨停
