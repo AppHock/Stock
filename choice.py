@@ -3857,8 +3857,8 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if 'ST' in codeName:
             continue
 
-        if '300084' in code:
-            print('')
+        # if '002148' in code:
+        #     print('')
 
         # 剔除当天涨幅低于4个点的
         if (dataArr[pre_move]['pct_chg'] < 4):
@@ -3887,31 +3887,31 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
                 isContinue = True
                 break
         
-        if (dataArr[pre_move]['close'] > dataArr[pre_move+30]['close'] * 2):
+        if (dataArr[pre_move]['close'] > dataArr[pre_move+30]['close'] * 2.5):
             isContinue = True
         
         if isContinue:
             continue
         
-        limitUpCodeNames.append(codeName)
+        # limitUpCodeNames.append(codeName)
         
-        if '300' in code[:3]:
-            if (dataArr[pre_move]['pct_chg'] > 19):
-                limiUpZTCodes.append(code)
-            else:
-                limitUpCodes.append(code)
-        else:
-            if (dataArr[pre_move]['pct_chg'] > 9.7):
-                limiUpZTCodes.append(code)
-            else:
-                limitUpCodes.append(code)
+        # if '300' in code[:3]:
+        #     if (dataArr[pre_move]['pct_chg'] > 19):
+        #         limiUpZTCodes.append(code)
+        #     else:
+        #         limitUpCodes.append(code)
+        # else:
+        #     if (dataArr[pre_move]['pct_chg'] > 9.7):
+        #         limiUpZTCodes.append(code)
+        #     else:
+        #         limitUpCodes.append(code)
         
         # 创新高未跌下来的股
-        if dataArr[0]['close'] > dataArr[pre_move]['close'] * 0.95:
+        if dataArr[0]['close'] > dataArr[pre_move]['close'] * 0.98:
             if not code in g_allCodes:
                 g_allCodes.append(code)
 
-    print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodeNames)))
+    # print('==============找出%d天内股价创新高的股票: %d ===============' % (num, len(limitUpCodeNames)))
     # if pre_move:
     #     pre_move_real_income(pre_move, limitUpCodes, [], sellDay)
     #     return
@@ -3919,10 +3919,10 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
     # for name in limitUpCodeNames:
     #     print(name)
     
-    print('涨停创新高')
-    stokeArrayToString(limiUpZTCodes)
-    print('\n\n创新高')
-    stokeArrayToString(limitUpCodes)
+    # print('涨停创新高')
+    # stokeArrayToString(limiUpZTCodes)
+    # print('\n\n创新高')
+    # stokeArrayToString(limitUpCodes)
 
 '''
 思路：找出创新高的股，且没有跌下去的股
@@ -4503,7 +4503,7 @@ if __name__ == "__main__":
     
 
     # 创新高，一直目前一直在赚钱的股
-    for i in range(3, 10):
+    for i in range(2, 6):
         getNewHighPrice(100, i, 0)
     print('最近一段时间创新高未跌下下来的股\n\n')
     stokeArrayToString(g_allCodes)
