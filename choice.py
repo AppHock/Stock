@@ -3860,7 +3860,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if '300084' in code:
             print('')
 
-        # 剔除当天涨幅低于6个点的
+        # 剔除当天涨幅低于4个点的
         if (dataArr[pre_move]['pct_chg'] < 4):
             continue
 
@@ -3886,6 +3886,10 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
             if dataArr[pre_move]['close'] < data['close']:
                 isContinue = True
                 break
+        
+        if (dataArr[pre_move]['close'] > dataArr[pre_move+30]['close'] * 2):
+            isContinue = True
+        
         if isContinue:
             continue
         
@@ -3902,6 +3906,7 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
             else:
                 limitUpCodes.append(code)
         
+        # 创新高未跌下来的股
         if dataArr[0]['close'] > dataArr[pre_move]['close'] * 0.95:
             if not code in g_allCodes:
                 g_allCodes.append(code)
@@ -3918,6 +3923,12 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
     stokeArrayToString(limiUpZTCodes)
     print('\n\n创新高')
     stokeArrayToString(limitUpCodes)
+
+'''
+思路：找出创新高的股，且没有跌下去的股
+【1】当天涨幅超过4个点，且后几个交易日未跌下去的股
+【2】100天内收盘价最高，剔除最近30个交易日涨幅超过100个点
+'''
     
 
 # 逻辑：boll线策略，低位放量大涨策略
