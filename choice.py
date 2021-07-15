@@ -3857,6 +3857,9 @@ def getNewHighPrice(num, pre_move = 0, sellDay = 0):
         if 'ST' in codeName:
             continue
 
+        if '300084' in code:
+            print('')
+
         # 剔除当天涨幅低于6个点的
         if (dataArr[pre_move]['pct_chg'] < 4):
             continue
@@ -4491,6 +4494,7 @@ if __name__ == "__main__":
     # 创新高，一直目前一直在赚钱的股
     for i in range(3, 10):
         getNewHighPrice(100, i, 0)
+    print('最近一段时间创新高未跌下下来的股\n\n')
     stokeArrayToString(g_allCodes)
     
 
