@@ -140,6 +140,18 @@ def getCurrentDayDate():
 def getCurrentUnixTime():
     return int(time.mktime(datetime.datetime.now().timetuple()))
 
+# 逻辑：是否是周末
+def isWeekend(date):
+    weekNo = datetime.datetime.today().weekday()
+    if len(date) == 8:
+        newDate = date[4:6] + '/' + date[6:8] + '/' + date[:4]
+        weekNo = datetime.datetime.strptime(newDate,'%m/%d/%Y').weekday()
+    
+    if weekNo < 5:
+        return False
+    else:
+        return True
+
 # date字符串转Unix时间
 def date2UnixTime(dt, dateFormat="%Y-%m-%d %H:%M:%S"):
     #转换成时间数组 %Y-%m-%d %H:%M:%S
@@ -420,8 +432,8 @@ def getRecentData(localUnix = 0, dayNum=0, time=0):
     return allStokeDate
 
 # 逻辑：获取最新几天的数据， time默认为0，time主要解决因停市导致数据没有的问题
-def getOldRecentData(dayNum, time=0):
-    currentTime = getCurrentUnixTime() - 3 * 24 * 60 * 60
+def getOldRecentData(dayNum, times=0):
+    currentTime = getCurrentUnixTime()
     dateAndUnix = getPreDateAndUnixTime(currentTime)
     date = dateAndUnix[0]
     dateUnix = dateAndUnix[1]
@@ -434,24 +446,36 @@ def getOldRecentData(dayNum, time=0):
     # for循环获取每天的全部股票的交易信息
     tempTime = 0
     
-    if dayNum == time == 0:
+    marginTime = 0
+    if dayNum == times == 0:
         print("输入的日期格式不对，dayNum和time不能同时为0")
     readDay = 0
     if dayNum:
         readDay = dayNum
     else:
-        readDay = time
+        readDay = times
     for i in range(readDay):
-        while 1:
-            if time & (tempTime == time):
+        # while 1:
+            if times & (tempTime == times):
                 return allStokeDate
-            if time:
+            if times:
                 tempTime += 1
-                if tempTime > time:
+                if tempTime > times:
                     return allStokeDate
             # 获取日线行情  ------ https://www.waditu.com/document/2?doc_id=27
             # vol:成交量、pct_chg:涨跌幅
+
+            # 如果是周六周天，跳过
+            if isWeekend(date):
+                dateAndUnix = getPreDateAndUnixTime(dateUnix)
+                date = dateAndUnix[0]
+                dateUnix = dateAndUnix[1]    
+                continue
+
+            marginTime = getCurrentUnixTime()
             data = pro.daily(trade_date=date, fields='ts_code, trade_date, open, high, low, close, pre_close, pct_chg, vol')
+            print('【%s】数据，耗时%ds下载结束' % (date, getCurrentUnixTime()-marginTime))
+            time.sleep(1)
             dateAndUnix = getPreDateAndUnixTime(dateUnix)
             date = dateAndUnix[0]
             dateUnix = dateAndUnix[1]
@@ -473,7 +497,7 @@ def getOldRecentData(dayNum, time=0):
                     # 时间越小，在数组位置约靠后
                     dataArr.append(dic)
                     allStokeDate[code] = dataArr
-                break
+                # break
     return allStokeDate
 
 # 逻辑：新增新的数据
@@ -481,6 +505,9 @@ def addNewData():
     global g_needUpdateLocalDataCodes
     # 获取本地保存的最新的日期(20200703)、时间戳
     reTopDate = getReTopDate()
+    if len(reTopDate) == 0:
+        print('<000001没有数据>')
+        return
     reTopUnix = date2UnixTime(reTopDate, "%Y%m%d")
     # 获取当天Unix时间戳、当天日期
     currentTime = getCurrentUnixTime()
@@ -773,19 +800,20 @@ if __name__ == "__main__":
     # getAllStokeData(5)
 
     # 更新股票行情信息
-    getAllStokeInfo()
+    # getAllStokeInfo()
     # getRecentWeekData(4, 0)
 
     saveDir = pathToSys(globalPath + 'DayKLine/')
     if not os.path.exists(saveDir):
         # 从网络获取最近120天的前复权数据保存在本地
-        getQFQStokeData()
+        # getQFQStokeData()
+        getOldAllStokeData(100)
     else:
         # 每天都可以跑一次，把最新的日K数据拉取到本地
         addNewData()
 
     # 通过日期下载未复权的数据，主要用于测试，复权策略
-    # getOldAllStokeData(10)
+    
     
     # 每次开始做回归测试时，需要先本地数据全部读取到内存中，以便其他进场获取数据
     getLocalData()
