@@ -1,5 +1,6 @@
 # 目的：通过软件筛选出进入低谷期的股票，然后买它
 
+from numpy.lib.type_check import iscomplex
 import tushare as tu
 import time
 import datetime
@@ -50,6 +51,7 @@ g_industryAndCode = Stoke.getCodeInfo()
 g_allStokeDate_100 = Stoke.getLocalKLineData(100)
 g_codeAndcodeName =  Stoke.getCodeAndCodeName()
 g_allCodes = []
+g_allSuperCodes = []
 
 
 # 逻辑：取所有只股票最近三个月最高价比最低价贵30%
@@ -146,6 +148,10 @@ def isNeedDelCode_688(code):
     if (code[0:3] == '688'):
         return True
     return False
+
+# 逻辑：深A，非创
+def isShenzhen_A(code):
+    return code[0:2] == '00'
 
 # 逻辑：需要300
 def isNeedCode_300(code):
@@ -4360,6 +4366,164 @@ def 高开低走(pre_move):
     for name in limitUpCodeNames:
         print(name)
 
+# 逻辑：新高策略，结合根据图形选股
+'''
+思路：当天创新高，涨幅超过4个点，后续两个交易日，涨跌幅<-1
+'''
+def newHightWithGirl(pre_move=0):
+    global g_allStokeDate_100, g_industryAndCode, g_allCodes, g_allSuperCodes
+    dayNum = 100
+
+    allStokeDate = g_allStokeDate_100
+    industryAndCode =  g_industryAndCode
+    limitUpCodeNames = []
+    superCodes = []
+
+    allCodes = list(allStokeDate.keys())
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if not isShenzhen_A(code):
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < dayNum:
+            continue
+
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        # 剔除ST类股票
+        if 'ST' in codeName:
+            continue
+
+        if '605003' in code:
+            print('')
+
+        # 剔除当天涨幅低于4个点的
+        if (dataArr[2+pre_move]['pct_chg'] < 4):
+            continue
+
+        # 最新一天收盘价 低于 新高那个天收盘价 * 0.98，说明调整跌破了新高价
+        if dataArr[0]['close'] < (dataArr[pre_move+2]['close']) * 0.98:
+            continue
+
+        if (dataArr[1+pre_move]['pct_chg'] < -1) | (dataArr[pre_move]['pct_chg'] < -1):
+            if (dataArr[2+pre_move]['pct_chg'] > 7):
+                if ((dataArr[1+pre_move]['pct_chg'] < -2) | (dataArr[pre_move]['pct_chg'] < -2)):
+                    continue
+            else:
+                continue
+        
+        if (dataArr[pre_move]['close'] > dataArr[-1]['close'] * 2):
+            print('涨的真他吗高，%s' % codeName)
+            if code not in g_allSuperCodes:
+                g_allSuperCodes.append(code)
+            continue
+
+        isContinue = False
+        
+        # 30个交易日内，没有涨幅超过9个点的股，太弱，剔除掉
+        day_30 = 0
+        # 涨幅超过9个点次数
+        zf_7_times = 0
+        for data in dataArr[3+pre_move:dayNum]:            
+            
+            if day_30 <= 30:
+                day_30 += 1
+                if data['pct_chg'] > 7:
+                    zf_7_times += 1
+            else:
+                if zf_7_times < 2:
+                    isContinue = True
+                    break
+
+            if dataArr[2+pre_move]['close'] < data['close']:
+                isContinue = True
+                break
+        
+        for data in dataArr[:pre_move]:
+            if data['pct_chg'] < -3:
+                isContinue = True
+                break
+
+
+        if isContinue:
+            continue
+        
+        # 创新高未跌下来的股
+        if not code in g_allCodes:
+            g_allCodes.append(code)
+
+# 逻辑：放巨量大涨，创新高
+'''
+【1】当日涨幅超过5个点
+【2】当日成交量是前面5天每天的2倍以上
+【3】100个交易日内创新高
+'''
+def killMoneyNewHightPrice(pre_move=0):
+    global g_allStokeDate_100, g_industryAndCode, g_allCodes, g_allSuperCodes, g_codeAllInfo
+    dayNum = 100
+
+    allStokeDate = g_allStokeDate_100
+    industryAndCode =  g_industryAndCode
+    limitUpCodeNames = []
+    superCodes = []
+
+    allCodes = list(allStokeDate.keys())
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if (isNeedDelCode_688(code)):
+            continue
+
+        dataArr = allStokeDate[code]
+        if len(dataArr) < dayNum:
+            continue
+
+        codeName = industryAndCode.get(code, {}).get('name', '')
+        # 剔除ST类股票
+        if 'ST' in codeName:
+            continue
+
+        # 市值剔除低于30亿
+        # codeAllInfo = g_codeAllInfo[code]
+        # if codeAllInfo['total_mv'] < 300000:
+        #     continue
+            
+
+        if '000935' in code:
+            print('')
+
+        if (dataArr[pre_move]['close'] > dataArr[-1]['close'] * 3):
+            print('涨的真他吗高，%s' % codeName)
+            if code not in g_allSuperCodes:
+                g_allSuperCodes.append(code)
+            continue
+
+        # 剔除当天涨幅低于5个点的
+        if (dataArr[pre_move]['pct_chg'] < 5):
+            continue
+
+        isContinue = False
+
+        # 当日成交量是前面 5天 每天的 1.5 倍以上
+        for data in dataArr[1+pre_move:1+pre_move+5]:            
+           if (dataArr[pre_move]['vol'] < data['vol']*1.5):
+               isContinue = True
+               break
+
+        # 100个交易日内创新高
+        for data in dataArr[pre_move+1:dayNum]:            
+            if (dataArr[pre_move]['close'] < data['close']):
+                isContinue = True
+                break
+
+        if isContinue:
+            continue
+        
+        # 巨量涨幅，创新高
+        if not code in g_allCodes:
+            g_allCodes.append(code)
+
+
+
 if __name__ == "__main__":
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
     # codes = '000517.SZ,000570.SZ,000659.SZ,000711.SZ,000796.SZ,000898.SZ,000955.SZ,000990.SZ,002098.SZ,002100.SZ,002103.SZ,002217.SZ,002274.SZ,002277.SZ,002342.SZ,002343.SZ,002374.SZ,002423.SZ,002470.SZ,002476.SZ,002492.SZ,002559.SZ,002591.SZ,002671.SZ,002694.SZ,002889.SZ,002903.SZ,002988.SZ,300025.SZ,300043.SZ,300048.SZ,300055.SZ,300062.SZ,300070.SZ,300173.SZ,300240.SZ,300272.SZ,300296.SZ,300303.SZ,300325.SZ,300350.SZ,300389.SZ,300647.SZ,300713.SZ,300819.SZ,300824.SZ,600027.SH,600110.SH,600116.SH,600125.SH,600159.SH,600269.SH,600287.SH,600382.SH,600540.SH,600576.SH,600642.SH,600692.SH,600707.SH,600715.SH,600757.SH,600780.SH,600792.SH,600794.SH,600796.SH,600869.SH,601008.SH,601368.SH,601588.SH,601700.SH,601869.SH,601992.SH,603012.SH,603315.SH,603356.SH,603567.SH,603585.SH,603598.SH,603918.SH'
@@ -4483,8 +4647,8 @@ if __name__ == "__main__":
     
 
     # 放巨量上涨，之后会有新高
-    # for i in range(3):
-        # bigVolBigZ_New(i)
+    # for i in range(10):
+    #     bigVolBigZ_New(i)
         
     # 昨日涨停
     # getYesterDayLimint()
@@ -4502,12 +4666,22 @@ if __name__ == "__main__":
     # getNewHighPrice(100, 0, 0)
     
 
+
     # 创新高，一直目前一直在赚钱的股
-    for i in range(2, 6):
-        getNewHighPrice(100, i, 0)
-    print('最近一段时间创新高未跌下下来的股\n\n')
-    stokeArrayToString(g_allCodes)
     
+    # for i in range(0, 6):
+    #     # getNewHighPrice(100, i, 0)
+    #     newHightWithGirl(i)
+    # print('\n\n最近一段时间创新高未跌下下来的股:%d' % (len(g_allCodes)))
+
+    killMoneyNewHightPrice(0)
+    print('\n\n巨量涨幅，创新高:%d' % (len(g_allCodes)))
+
+
+    stokeArrayToString(g_allCodes)
+
+    print('\n\n涨的很猛的股:%d' % (len(g_allSuperCodes)))
+    stokeArrayToString(g_allSuperCodes)
 
     # 昨日涨停
     # getYesterDayLimint()

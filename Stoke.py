@@ -1,3 +1,4 @@
+# coding=UTF-8
 from posixpath import lexists
 from numpy.core.arrayprint import array2string
 from numpy.core.numeric import allclose
@@ -82,7 +83,6 @@ def getAllStokeInfo():
 
 # 读取本地所有股票信息
 def getCodeInfo():
-    # getAllStokeInfo()
     saveDir = pathToSys(globalPath + 'StokeInfo/')
     if not os.path.exists(saveDir):
         os.makedirs(saveDir)
@@ -800,20 +800,16 @@ if __name__ == "__main__":
     # getAllStokeData(5)
 
     # 更新股票行情信息
-    # getAllStokeInfo()
+    getAllStokeInfo()
     # getRecentWeekData(4, 0)
 
-    saveDir = pathToSys(globalPath + 'DayKLine/')
-    if not os.path.exists(saveDir):
-        # 从网络获取最近120天的前复权数据保存在本地
-        # getQFQStokeData()
-        getOldAllStokeData(100)
-    else:
-        # 每天都可以跑一次，把最新的日K数据拉取到本地
-        addNewData()
-
-    # 通过日期下载未复权的数据，主要用于测试，复权策略
-    
+    # saveDir = pathToSys(globalPath + 'DayKLine/')
+    # if not os.path.exists(saveDir):
+    #     # 从网络获取最近120天的前复权数据保存在本地
+    #     getQFQStokeData()
+    # else:
+    #     # 每天都可以跑一次，把最新的日K数据拉取到本地
+    #     addNewData()
     
     # 每次开始做回归测试时，需要先本地数据全部读取到内存中，以便其他进场获取数据
     getLocalData()
