@@ -4225,6 +4225,9 @@ def getNewPoBan(pre_move=0):
     print(codeString)
 
 # 逻辑：最近有过大涨的股，跌到boll线附近
+# 【1】最近20天内，最高收盘价>最低收盘价的*1.3
+# 【2】调整跌到中轨线附近
+# 注意事项，下降趋势、MACD绿了几天的不考虑，人工剔除
 def ztAndBoll(pre_move=0):
     dayNum = 30 + pre_move
     allStokeDate = getLocalKLineData(dayNum)
@@ -4234,7 +4237,7 @@ def ztAndBoll(pre_move=0):
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if (isNeedDelCode_300_688(code)):
+        if (isNeedDelCode_688(code)):
             continue
 
         dataArr = allStokeDate[code]
@@ -4247,25 +4250,18 @@ def ztAndBoll(pre_move=0):
 
         if '000158' in code:
             print('')
-
-        # 最近20天涨幅，超过1次的，根据次数动态生成boll线价差
-        pct_8_num = 0
-        for data in dataArr[pre_move:20+pre_move]:
-            if (data['pct_chg']) > 9:
-                pct_8_num += 1
-        if pct_8_num < 3:
-            # 20天涨幅超过8个点的，少于3天的剔除
-            continue
-
-        numAndChage = {3:0.02, 4:0.02, 5:0.025, 6:0.2, 7:0.2, 8:0.2, 9:0.25, 10:0.25, 11:0.25, 12:0.25, 13:0.3}
-        change = numAndChage.get(pct_8_num)
-
-        if (pct_8_num > 5):
-            change = 0.05
-
+        
+        change = 0.05
+       
         # boll线价格
         middleBollPrice = calMB(dataArr[pre_move:pre_move+20])
         if (abs(calChange(dataArr[pre_move]['close'], middleBollPrice)) > change):
+            continue
+
+        # 最近20天内，最高收盘价>最低收盘价的*1.3
+        maxPrice = getMaxClosePrice(dataArr[pre_move:pre_move+20])
+        minPrice  = getMinClosePrice(dataArr[pre_move:pre_move+20])
+        if (maxPrice < minPrice*1.3):
             continue
 
         # 剔除流通市值低于30亿
