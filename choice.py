@@ -4518,9 +4518,53 @@ def killMoneyNewHightPrice(pre_move=0):
         if not code in g_allCodes:
             g_allCodes.append(code)
 
+# 思路：穿过boll中轨线，站稳boll中轨线3天
+# 逻辑：穿过中轨线，并站稳3天
 
+def crossBoll_Mid_3(pre_move=0):
+    # 站稳boll线中轨线天数
+    niceDay = 3
+    dayNum = pre_move + 20 + niceDay
+    allStokeDate = getLocalKLineData(dayNum)
+    limitUpCodes = []
+    allCodes = list(allStokeDate.keys())
+
+    for i in range(len(allCodes)):
+        code = allCodes[i]
+        if (code[0:3] == '688'):
+            continue
+        dataArr = allStokeDate[code]
+
+        # if code[0:6] == '600641':
+        #     print('www')
+        if len(dataArr) < dayNum:
+            continue
+        
+        # 中轨线价格
+        midPrice = calMB(dataArr[pre_move+niceDay:pre_move+niceDay+20])
+
+        # 当前穿过中轨线
+        if (dataArr[niceDay]['open'] > midPrice) | (dataArr[niceDay]['close'] <= midPrice):
+            continue
+    
+        isContinue = False
+        for i in range(3):
+            midP = calMB(dataArr[pre_move+i:pre_move+i+20])
+            if (dataArr[pre_move+i]['open'] < midP) | (dataArr[pre_move+i]['close'] < midP):
+                isContinue = True
+                break
+        if isContinue:
+            continue
+
+        limitUpCodes.append(code)
+    print('===============以下是：穿过boll中轨线，站稳boll中轨线3天===============')
+    # for code in limitUpCodes:
+    #     print(code)
+    stokeArrayToString(limitUpCodes)
 
 if __name__ == "__main__":
+
+    crossBoll_Mid_3()
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
     # codes = '000517.SZ,000570.SZ,000659.SZ,000711.SZ,000796.SZ,000898.SZ,000955.SZ,000990.SZ,002098.SZ,002100.SZ,002103.SZ,002217.SZ,002274.SZ,002277.SZ,002342.SZ,002343.SZ,002374.SZ,002423.SZ,002470.SZ,002476.SZ,002492.SZ,002559.SZ,002591.SZ,002671.SZ,002694.SZ,002889.SZ,002903.SZ,002988.SZ,300025.SZ,300043.SZ,300048.SZ,300055.SZ,300062.SZ,300070.SZ,300173.SZ,300240.SZ,300272.SZ,300296.SZ,300303.SZ,300325.SZ,300350.SZ,300389.SZ,300647.SZ,300713.SZ,300819.SZ,300824.SZ,600027.SH,600110.SH,600116.SH,600125.SH,600159.SH,600269.SH,600287.SH,600382.SH,600540.SH,600576.SH,600642.SH,600692.SH,600707.SH,600715.SH,600757.SH,600780.SH,600792.SH,600794.SH,600796.SH,600869.SH,601008.SH,601368.SH,601588.SH,601700.SH,601869.SH,601992.SH,603012.SH,603315.SH,603356.SH,603567.SH,603585.SH,603598.SH,603918.SH'
     # 获得当天的涨跌幅
@@ -4670,14 +4714,14 @@ if __name__ == "__main__":
     #     newHightWithGirl(i)
     # print('\n\n最近一段时间创新高未跌下下来的股:%d' % (len(g_allCodes)))
 
-    killMoneyNewHightPrice(0)
-    print('\n\n巨量涨幅，创新高:%d' % (len(g_allCodes)))
+    # killMoneyNewHightPrice(0)
+    # print('\n\n巨量涨幅，创新高:%d' % (len(g_allCodes)))
 
 
-    stokeArrayToString(g_allCodes)
+    # stokeArrayToString(g_allCodes)
 
-    print('\n\n涨的很猛的股:%d' % (len(g_allSuperCodes)))
-    stokeArrayToString(g_allSuperCodes)
+    # print('\n\n涨的很猛的股:%d' % (len(g_allSuperCodes)))
+    # stokeArrayToString(g_allSuperCodes)
 
     # 昨日涨停
     # getYesterDayLimint()
