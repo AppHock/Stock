@@ -621,7 +621,7 @@ def get_daily_basic(codesStr, date=getCurrentDayDate()):
             codeAllInfo[code] = info
     return codeAllInfo
 
-# 逻辑：获取前复权的250日均线
+# 逻辑：获取前复权的250日K线图
 def getQFQStokeData(codes=[], startDate='', endDate=''):
     codeAndCodeName = getCodeAndCodeName()
     if len(codes) == 0:
@@ -803,13 +803,13 @@ if __name__ == "__main__":
     getAllStokeInfo()
     # getRecentWeekData(4, 0)
 
-    # saveDir = pathToSys(globalPath + 'DayKLine/')
-    # if not os.path.exists(saveDir):
-    #     # 从网络获取最近120天的前复权数据保存在本地
-    #     getQFQStokeData()
-    # else:
-    #     # 每天都可以跑一次，把最新的日K数据拉取到本地
-    #     addNewData()
+    saveDir = pathToSys(globalPath + 'DayKLine/')
+    if not os.path.exists(saveDir):
+        # 从网络获取最近120天的前复权数据保存在本地
+        getQFQStokeData()
+    else:
+        # 每天都可以跑一次，把最新的日K数据拉取到本地
+        addNewData()
     
     # 每次开始做回归测试时，需要先本地数据全部读取到内存中，以便其他进场获取数据
     getLocalData()
