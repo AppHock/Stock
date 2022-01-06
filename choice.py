@@ -4224,12 +4224,12 @@ def getNewPoBan(pre_move=0):
         print(name)
     print(codeString)
 
-# 逻辑：最近有过大涨的股，跌到boll线附近
-# 【1】最近20天内，最高收盘价>最低收盘价的*1.3
+# 逻辑：最近有涨停股，跌到boll中轨线附近
+# 【1】最近10天内，涨停
 # 【2】调整跌到中轨线附近
 # 注意事项，下降趋势、MACD绿了几天的不考虑，人工剔除
 def ztAndBoll(pre_move=0):
-    dayNum = 30 + pre_move
+    dayNum = 20 + pre_move
     allStokeDate = getLocalKLineData(dayNum)
     industryAndCode =  Stoke.getCodeInfo()
     limitUpCodes = []
@@ -4237,13 +4237,15 @@ def ztAndBoll(pre_move=0):
     allCodes = list(allStokeDate.keys())
     for i in range(len(allCodes)):
         code = allCodes[i]
-        if (isNeedDelCode_688(code)):
+        # 剔除非深A股
+        if not isShenzhen_A(code):
             continue
 
         dataArr = allStokeDate[code]
         if (len(dataArr) < dayNum):
             continue
         
+        # 剔除ST
         codeName = industryAndCode.get(code, {}).get('name', '')
         if ('ST' in codeName) | ('' == codeName):
             continue
@@ -4253,16 +4255,16 @@ def ztAndBoll(pre_move=0):
         
         change = 0.05
        
-        # boll线价格
+        # boll线中轨线价格
         middleBollPrice = calMB(dataArr[pre_move:pre_move+20])
         if (abs(calChange(dataArr[pre_move]['close'], middleBollPrice)) > change):
             continue
 
         # 最近20天内，最高收盘价>最低收盘价的*1.3
-        maxPrice = getMaxClosePrice(dataArr[pre_move:pre_move+20])
-        minPrice  = getMinClosePrice(dataArr[pre_move:pre_move+20])
-        if (maxPrice < minPrice*1.3):
-            continue
+        # maxPrice = getMaxClosePrice(dataArr[pre_move:pre_move+20])
+        # minPrice  = getMinClosePrice(dataArr[pre_move:pre_move+20])
+        # if (maxPrice < minPrice*1.3):
+        #     continue
 
         # 剔除流通市值低于30亿
         # newCodes = limitUpCodes[:100]
@@ -4283,7 +4285,7 @@ def ztAndBoll(pre_move=0):
     
     pre_move_real_income(pre_move, limitUpCodes, [], 0)
 
-    print('==============最近有过大涨，跌到boll线附近的股票: %d ===============' % len(limitUpCodes))
+    print('==============最近有过涨停，跌到boll线中轨线附近的股票: %d ===============' % len(limitUpCodes))
     # for name in limitUpCodeNames:
     #     print(name)
     stokeArrayToString(limitUpCodeNames)
@@ -4564,7 +4566,7 @@ def crossBoll_Mid_3(pre_move=0):
 
 if __name__ == "__main__":
 
-    crossBoll_Mid_3()
+    # crossBoll_Mid_3()
     # codes = '000407.SZ,002836.SZ,600982.SH,300117.SZ,300147.SZ,300335.SZ,300402.SZ,300519.SZ'
     # codes = '000517.SZ,000570.SZ,000659.SZ,000711.SZ,000796.SZ,000898.SZ,000955.SZ,000990.SZ,002098.SZ,002100.SZ,002103.SZ,002217.SZ,002274.SZ,002277.SZ,002342.SZ,002343.SZ,002374.SZ,002423.SZ,002470.SZ,002476.SZ,002492.SZ,002559.SZ,002591.SZ,002671.SZ,002694.SZ,002889.SZ,002903.SZ,002988.SZ,300025.SZ,300043.SZ,300048.SZ,300055.SZ,300062.SZ,300070.SZ,300173.SZ,300240.SZ,300272.SZ,300296.SZ,300303.SZ,300325.SZ,300350.SZ,300389.SZ,300647.SZ,300713.SZ,300819.SZ,300824.SZ,600027.SH,600110.SH,600116.SH,600125.SH,600159.SH,600269.SH,600287.SH,600382.SH,600540.SH,600576.SH,600642.SH,600692.SH,600707.SH,600715.SH,600757.SH,600780.SH,600792.SH,600794.SH,600796.SH,600869.SH,601008.SH,601368.SH,601588.SH,601700.SH,601869.SH,601992.SH,603012.SH,603315.SH,603356.SH,603567.SH,603585.SH,603598.SH,603918.SH'
     # 获得当天的涨跌幅
@@ -4743,7 +4745,8 @@ if __name__ == "__main__":
     # 本周涨幅超过20个点
     # currentWeekStrategy()
 
-    # 最近有过大涨，跌到boll线附近
+    # 最近有过涨停，跌到boll线附近
+    ztAndBoll()
     # for i in range(20):
     #     ztAndBoll(i)
 
