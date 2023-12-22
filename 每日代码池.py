@@ -95,12 +95,38 @@ def getCurrentNormal(exchange):
         stokeDates.append(fisrtDate)
     return stokeCodes
 
-# 前 5 交易日，未触及停牌
-def suspended(day = 5):
-    datas = pro.query('suspend', ts_code='', suspend_date='20231218', resume_date='', fields='')
+# 获取近一个月的交易日历
+def getRecentMonthTradeDate():
+    curDate = getCurrentDate()
+    curDateUnix = getCurrentDateUnixTime()
+    # 获取近一个月的交易日历
+    preMonthUnix = curDateUnix - 60*60*24*30
+    preMonthDate = unixTime2LocalDate(preMonthUnix)
+
+    datas = pro.trade_cal(exchange='', start_date=preMonthDate, end_date=curDate)
+    values = datas.values
+    return values
+
+# 获取前 n 个 交易日，停牌的股票，n 默认为 5
+def getSuspendedCodes(day = 5):
+    origin = 5
+    curDate = getCurrentDate()
+    
+    date = curDate
+    dateUnix = date2UnixTime(date)
+    
     codes = []
-    for data in datas.values:
-        codes.append(data[0])
+    while(day):
+        datas = pro.query('suspend', ts_code='', suspend_date=date, resume_date='', fields='')
+        if len(datas.values) != 0:
+            for data in datas.values:
+                code = data[0]
+                if code not in codes:
+                    codes.append(code)
+            day -= 1
+        dateUnix = getPreDateAndUnixTime(dateUnix)[1]
+        date = unixTime2LocalDate(dateUnix)
+    print('前%d 个交易日，发生过停牌的有'% origin, codes)
     return codes
 
 # 是否触及涨停
@@ -116,27 +142,6 @@ def isZhang(code, tradeDate, high, preClose):
             print('出现了涨停，代码是:%s, 涨幅:%f, 日期是:%s' % (code, chage, tradeDate))
     return chage > 0.098
 
-
-
-# 逻辑：查询某只股票最近多少天的日K数据,
-def getDayKLine(codes, day):
-    global g_currentDateUnix, g_currentDate
-    startDate = unixTime2LocalDate(g_currentDateUnix - 60 * 60 * 24 * day, "%Y%m%d")
-    datas = pro.daily(ts_code=codes, start_date=startDate, end_date=g_currentDate, fields='ts_code, trade_date, high, pre_close') # 
-    # 查询某只股票最近15个交易日天内如果有跌幅超过9%，说明这只股很危险，
-    highClose = 0
-    todayClose = 0
-    allClose = 0
-    times = 0
-    for data in datas.values:
-        code = data[0]
-        high = data[2]
-        pre_close = data[3]
-        trade_date = data[1]
-        if isZhang(code, trade_date, high, pre_close):
-            return True
-    return False
-
 # 逻辑：把数组里面的数据组成字符串
 def getStrWithList(list):
     str = ''
@@ -147,7 +152,7 @@ def getStrWithList(list):
             str += ',' + code
     return str
 
-# 通过日期获取日K 数据
+# 获取最近几天的日 K 数据
 def getDaykLine(day):
     origin = day
     curDate = getCurrentDate()
@@ -168,11 +173,8 @@ def getDaykLine(day):
         date = unixTime2LocalDate(dateUnix)
     print('最近%d天 日K 数据获取完成' % origin)
     return allCodeInfos
-
-# 获取最近几个交易日的数据
-# def getRecentlyDayK(day):
     
-# 逻辑：往本地重写数据
+# 逻辑：往本地Excel写数据
 def writeCodesToLocalExcel(codes, isSZ):
     global globalPath
     suffix = "上证"
@@ -215,8 +217,8 @@ if __name__ == "__main__":
     codes_sz = getCurrentNormal('SZSE')
 
     # 移除最近 5 日停盘的股
-    suspendedCodes = suspended()
-    for susCode in suspendedCodes:
+    codes = getSuspendedCodes()
+    for susCode in codes:
         if susCode in codes_sh:
             codes_sh.remove(susCode)
         
@@ -224,7 +226,6 @@ if __name__ == "__main__":
             codes_sz.remove(susCode)
 
     allCodeInfos = getDaykLine(5)
-
     # 获取最近 5 天的日 K 数据
     answer_sh = removeTouchZhang(allCodeInfos, codes_sh)
     answer_sz = removeTouchZhang(allCodeInfos, codes_sz)
