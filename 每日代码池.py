@@ -73,8 +73,9 @@ def getCurrentNormal(exchange):
 # 前 5 日未触及涨停板和停牌
 
 # 是否触及涨停
-def isZhang(code, chage):
-    if(('300' in code) | ('688' in code)) & chage > 0.198:
+def isZhang(code, chage, tradeDate):
+    if (('300' in code) | ('688' in code)) & (chage > 0.198):
+        print('出现了涨停，代码是:%s, 涨幅:%f, 日期是:%s' % (code, chage, tradeDate))
         return True
     return chage > 0.098
 
@@ -90,28 +91,15 @@ def getDayKLine(codes, day):
     todayClose = 0
     allClose = 0
     times = 0
+    print('正在处理的code：%s'%codes)
     for data in datas.values:
-        pre_close = data[3]
+        code = data[0]
+        trade_date = data[1]
         high = data[2]
+        pre_close = data[3]
         high_chg = (high-pre_close)/pre_close
-        isZhang(code, high_chg)
-        times += 1
-        if todayClose == 0:
-            todayClose = data[0]
-        if (data[1] <= -8) & (times <= 15):
-            return False
-        if highClose < data[0]:
-            highClose = data[0]
-        allClose += data[0]
-    
-    # (今收 - 近day天平均收盘价) / 近day天平均收盘价 > 0.8
-    if ((todayClose - allClose/day) / (allClose/day) > 0.8):
-        return False
-
-    # if highClose == todayClose:
-        # return False
-
-    return True
+        return isZhang(code, high_chg, trade_date)
+    return False
 
 # 逻辑：把数组里面的数据组成字符串
 def getStrWithList(list):
@@ -126,6 +114,10 @@ def getStrWithList(list):
 # 通过日期获取日K 数据
 def getDaykLine(date):
     df = pro.daily(trade_date='20180810')
+
+# 获取最近几个交易日的数据
+# def getRecentlyDayK(day):
+    
     
 
 
@@ -133,5 +125,9 @@ if __name__ == "__main__":
 
     codes = getCurrentNormal('SSE')
     codes_str = getStrWithList(codes)
-    getDayKLine(codes_str,7)
+    answer = []
+    for code in codes:
+        if getDayKLine(code,7):
+            answer.append(code)
+    
     print('需要创建的文件路径')
