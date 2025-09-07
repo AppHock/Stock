@@ -629,8 +629,6 @@ def getQFQStokeData(codes=[], startDate='', endDate=''):
 
         for code in allCodes:
             codeName = codeAndCodeName.get(code, '')
-            if ('退' in codeName) | ('688' in code[:3]):
-                continue
             codes.append(code)
     
     endDateUnix = getCurrentUnixTime()
